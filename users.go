@@ -6,16 +6,14 @@ import (
 	"net/http"
 	"time"
 
-	"go-rest-framework/modules/gorest"
-	"go-rest-framework/modules/res"
-
 	"github.com/asaskevich/govalidator"
+	"github.com/go-rest-framework/core"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
-var App gorest.App
+var App core.App
 
 type Users []User
 
@@ -57,7 +55,7 @@ type Reset struct {
 	NewpassRe  string `valid:"required"`
 }
 
-func Configure(a gorest.App) {
+func Configure(a core.App) {
 	App = a
 
 	App.DB.AutoMigrate(&User{})
@@ -82,7 +80,7 @@ func Configure(a gorest.App) {
 func srvGetOne(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
-		rsp  = res.Response{Data: &user}
+		rsp  = core.Response{Data: &user}
 	)
 
 	vars := mux.Vars(r)
@@ -100,7 +98,7 @@ func srvGetOne(w http.ResponseWriter, r *http.Request) {
 func srvGetAll(w http.ResponseWriter, r *http.Request) {
 	var (
 		users Users
-		rsp   = res.Response{Data: &users}
+		rsp   = core.Response{Data: &users}
 	)
 
 	App.DB.Find(&users)
@@ -113,7 +111,7 @@ func srvGetAll(w http.ResponseWriter, r *http.Request) {
 func srvCreate(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
-		rsp  = res.Response{Data: &user}
+		rsp  = core.Response{Data: &user}
 	)
 
 	govalidator.TagMap["unique"] = govalidator.Validator(func(str string) bool {
@@ -144,7 +142,7 @@ func srvUpdate(w http.ResponseWriter, r *http.Request) {
 	var (
 		data UserUpdate
 		user User
-		rsp  = res.Response{Data: &data}
+		rsp  = core.Response{Data: &data}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -171,7 +169,7 @@ func srvDelete(w http.ResponseWriter, r *http.Request) {
 	var (
 		data User
 		user User
-		rsp  = res.Response{Data: &data}
+		rsp  = core.Response{Data: &data}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -196,7 +194,7 @@ func srvLogin(w http.ResponseWriter, r *http.Request) {
 	var (
 		data Login
 		user User
-		rsp  = res.Response{Data: &data}
+		rsp  = core.Response{Data: &data}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -229,7 +227,7 @@ func srvLogin(w http.ResponseWriter, r *http.Request) {
 func srvRegister(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
-		rsp  = res.Response{Data: &user}
+		rsp  = core.Response{Data: &user}
 	)
 
 	govalidator.TagMap["unique"] = govalidator.Validator(func(str string) bool {
@@ -275,7 +273,7 @@ func srvConfirm(w http.ResponseWriter, r *http.Request) {
 	var (
 		data Confirm
 		user User
-		rsp  = res.Response{Data: &data}
+		rsp  = core.Response{Data: &data}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -306,7 +304,7 @@ func srvResetrequest(w http.ResponseWriter, r *http.Request) {
 	var (
 		data ResetRequest
 		user User
-		rsp  = res.Response{Data: &data}
+		rsp  = core.Response{Data: &data}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -349,7 +347,7 @@ func srvReset(w http.ResponseWriter, r *http.Request) {
 	var (
 		data Reset
 		user User
-		rsp  = res.Response{Data: &data}
+		rsp  = core.Response{Data: &data}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
