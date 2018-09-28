@@ -3,27 +3,31 @@ package users_test
 import (
 	"encoding/json"
 	"fmt"
-	"go-rest-framework/modules/res"
-	"go-rest-framework/modules/users"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/go-rest-framework/core"
+	"github.com/go-rest-framework/users"
+	"github.com/icrowley/fake"
 )
 
 var Uid uint
 var Uidnew uint
+var UEmail string
+var UNewEmail string
 var AdminToken string
 var Murl = "http://gorest.ga/api/users/"
 
 type TestUsers struct {
-	Errors []res.ErrorMsg
+	Errors []core.ErrorMsg
 	Data   users.Users
 }
 
 type TestUser struct {
-	Errors []res.ErrorMsg
+	Errors []core.ErrorMsg
 	Data   users.User
 }
 
@@ -65,6 +69,8 @@ func readUserBody(r *http.Response, t *testing.T) TestUser {
 //"/api/users/register", srvRegister).Methods("POST")
 func TestRegister(t *testing.T) {
 
+	UEmail = fake.EmailAddress()
+
 	url := Murl + "register"
 	userJson := `{"Email":"sldfjsdlfeusdlfjsdlfj", "Password":"343223423423"}`
 
@@ -94,7 +100,7 @@ func TestRegister(t *testing.T) {
 		t.Fatal("require validation dont work")
 	}
 
-	userJson = `{"Email":"sldfjsdlf@eusdlfjsdlfj.com", "Password":"343223423423"}`
+	userJson = `{"Email":"` + UEmail + `", "Password":"343223423423"}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -180,7 +186,7 @@ func TestLogin(t *testing.T) {
 		t.Fatal("password check fail")
 	}
 
-	userJson = `{"Email":"sldfjsdlf@eusdlfjsdlfj.com"}`
+	userJson = `{"Email":"` + UEmail + `"}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -194,7 +200,7 @@ func TestLogin(t *testing.T) {
 		t.Fatal("require validation dont work")
 	}
 
-	userJson = `{"Email":"sldfjsdlf@eusdlfjsdlfj.com", "Password":"343223423423"}`
+	userJson = `{"Email":"` + UEmail + `", "Password":"343223423423"}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -215,7 +221,7 @@ func TestLogin(t *testing.T) {
 func TestResetrequest(t *testing.T) {
 
 	url := Murl + "resetrequest"
-	var userJson = `{"Email":"sldfjsdlf@eusdlfjsdlfj.com", "CallBackUrl":"http://test.ttt"}`
+	var userJson = `{"Email":"` + UEmail + `", "CallBackUrl":"http://test.ttt"}`
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -283,9 +289,10 @@ func TestAdminLogin(t *testing.T) {
 
 //"/api/users/create", App.Protect(srvCreate, []string{"admin"})).Methods("POST")
 func TestCreate(t *testing.T) {
+	UNewEmail = fake.EmailAddress()
 	url := Murl + "create"
 	userJson := `{
-		"Email":"newuser@user.u",
+		"Email":"` + UNewEmail + `",
 		"Password":"newuserpass",
 		"Role":"user"
 	}`
@@ -368,7 +375,7 @@ func TestGetOne(t *testing.T) {
 		t.Fatal(u.Errors)
 	}
 
-	if u.Data.Email != "sldfjsdlf@eusdlfjsdlfj.com" {
+	if u.Data.Email != UEmail {
 		t.Fatal("wrong email get")
 	}
 
