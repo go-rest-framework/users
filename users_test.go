@@ -19,7 +19,7 @@ var Uidnew uint
 var UEmail string
 var UNewEmail string
 var AdminToken string
-var Murl = "http://gorest.ga/api/users/"
+var Murl = "http://gorest.ga/api/users"
 
 type TestUsers struct {
 	Errors []core.ErrorMsg
@@ -71,7 +71,7 @@ func TestRegister(t *testing.T) {
 
 	UEmail = fake.EmailAddress()
 
-	url := Murl + "register"
+	url := Murl + "/register"
 	userJson := `{"Email":"sldfjsdlfeusdlfjsdlfj", "Password":"343223423423"}`
 
 	resp := doRequest(url, "POST", userJson, "")
@@ -122,7 +122,7 @@ func TestRegister(t *testing.T) {
 //"/api/users/confirm", srvConfirm).Methods("POST")
 func TestConfirm(t *testing.T) {
 
-	url := Murl + "confirm"
+	url := Murl + "/confirm"
 	var userJson = `{"CheckToken":"wrongtoken"}`
 
 	resp := doRequest(url, "POST", userJson, "")
@@ -171,7 +171,7 @@ func TestConfirm(t *testing.T) {
 //"/api/users/login", srvLogin).Methods("POST")
 func TestLogin(t *testing.T) {
 
-	url := Murl + "login"
+	url := Murl + "/login"
 	var userJson = `{"Email":"sdlf@eusdlfjsdlfj.com", "Password":"dddd343223423423"}`
 
 	resp := doRequest(url, "POST", userJson, "")
@@ -220,7 +220,7 @@ func TestLogin(t *testing.T) {
 //"/api/users/resetrequest", srvResetrequest).Methods("POST")
 func TestResetrequest(t *testing.T) {
 
-	url := Murl + "resetrequest"
+	url := Murl + "/resetrequest"
 	var userJson = `{"Email":"` + UEmail + `", "CallBackUrl":"http://test.ttt"}`
 
 	resp := doRequest(url, "POST", userJson, "")
@@ -235,7 +235,7 @@ func TestResetrequest(t *testing.T) {
 //"/api/users/reset", srvReset).Methods("POST")
 func TestReset(t *testing.T) {
 
-	url := Murl + "reset"
+	url := Murl + "/reset"
 	var userJson = `{
 		"CheckToken":"testchecktoken",
 		"Newpass":"newpass",
@@ -271,7 +271,7 @@ func TestReset(t *testing.T) {
 
 func TestAdminLogin(t *testing.T) {
 
-	url := Murl + "login"
+	url := Murl + "/login"
 	var userJson = `{"Email":"admin@admin.a", "Password":"adminpass"}`
 
 	resp := doRequest(url, "POST", userJson, "")
@@ -290,20 +290,14 @@ func TestAdminLogin(t *testing.T) {
 //"/api/users/create", App.Protect(srvCreate, []string{"admin"})).Methods("POST")
 func TestCreate(t *testing.T) {
 	UNewEmail = fake.EmailAddress()
-	url := Murl + "create"
+	url := Murl
 	userJson := `{
 		"Email":"` + UNewEmail + `",
 		"Password":"newuserpass",
 		"Role":"user"
 	}`
 
-	resp := doRequest(url, "GET", userJson, AdminToken)
-
-	if resp.StatusCode == 200 {
-		t.Fatal("POST check dont work")
-	}
-
-	resp = doRequest(url, "POST", userJson, AdminToken)
+	resp := doRequest(url, "POST", userJson, AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
@@ -323,7 +317,7 @@ func TestCreate(t *testing.T) {
 //"/api/users/get-all", App.Protect(srvGetAll, []string{"admin"})).Methods("GET")
 func TestGetAll(t *testing.T) {
 	// get count
-	url := Murl + "get-all"
+	url := Murl
 
 	resp := doRequest(url, "GET", "", "  ")
 
@@ -348,7 +342,7 @@ func TestGetAll(t *testing.T) {
 
 //"/api/users/get-one/{id}", App.Protect(srvGetOne, []string{"admin"})).Methods("GET")
 func TestGetOne(t *testing.T) {
-	url := Murl + "get-one/" + "0"
+	url := Murl + "/0"
 	resp := doRequest(url, "GET", "", AdminToken)
 
 	if resp.StatusCode != 200 {
@@ -361,7 +355,7 @@ func TestGetOne(t *testing.T) {
 		t.Fatal("element not found dont work")
 	}
 
-	url = fmt.Sprintf("%s%s%d", Murl, "get-one/", Uid)
+	url = fmt.Sprintf("%s%s%d", Murl, "/", Uid)
 
 	resp = doRequest(url, "GET", "", AdminToken)
 
@@ -384,10 +378,10 @@ func TestGetOne(t *testing.T) {
 
 //"/api/users/update", App.Protect(srvUpdate, []string{"admin"})).Methods("POST")
 func TestUpdate(t *testing.T) {
-	url := Murl + "update"
+	url := fmt.Sprintf("%s%s%d", Murl, "/", Uid)
 	userJson := `{"Email":"sldfjsdlfeusdlfjsdlfj", "Password":"343223423423"}`
 
-	resp := doRequest(url, "POST", userJson, AdminToken)
+	resp := doRequest(url, "PATCH", userJson, AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
@@ -399,25 +393,10 @@ func TestUpdate(t *testing.T) {
 		t.Fatal("email type validation dont work")
 	}
 
+	url = fmt.Sprintf("%s%s%d", Murl, "/", Uidnew)
 	userJson = `{"Role":"admin"}`
 
-	resp = doRequest(url, "POST", userJson, AdminToken)
-
-	if resp.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp.StatusCode)
-	}
-
-	u = readUserBody(resp, t)
-
-	if len(u.Errors) == 0 {
-		t.Fatal("require validation dont work")
-	}
-
-	userJson = fmt.Sprintf("%s%d%s", `{"ID":`, Uidnew, `,"Role":"admin"}`)
-
-	fmt.Printf("%s\n", userJson)
-
-	resp = doRequest(url, "POST", userJson, AdminToken)
+	resp = doRequest(url, "PATCH", userJson, AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
@@ -434,10 +413,9 @@ func TestUpdate(t *testing.T) {
 
 //"/api/users/delete", App.Protect(srvDelete, []string{"admin"})).Methods("POST")
 func TestDelete(t *testing.T) {
-	url := Murl + "delete"
-	userJson := `{"ID":"0"}`
+	url := fmt.Sprintf("%s%s%d", Murl, "/", 0)
 
-	resp := doRequest(url, "POST", userJson, AdminToken)
+	resp := doRequest(url, "DELETE", "", AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
@@ -449,9 +427,9 @@ func TestDelete(t *testing.T) {
 		t.Fatal("wrong id validation dont work")
 	}
 
-	userJson = fmt.Sprintf("%s%d%s", `{"ID":`, Uid, `}`)
+	url = fmt.Sprintf("%s%s%d", Murl, "/", Uid)
 
-	resp = doRequest(url, "POST", userJson, AdminToken)
+	resp = doRequest(url, "DELETE", "", AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
@@ -463,9 +441,9 @@ func TestDelete(t *testing.T) {
 		t.Fatal(u.Errors)
 	}
 
-	userJson = fmt.Sprintf("%s%d%s", `{"ID":`, Uidnew, `}`)
+	url = fmt.Sprintf("%s%s%d", Murl, "/", Uidnew)
 
-	resp = doRequest(url, "POST", userJson, AdminToken)
+	resp = doRequest(url, "DELETE", "", AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)

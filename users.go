@@ -29,7 +29,6 @@ type User struct {
 }
 
 type UserUpdate struct {
-	ID       uint
 	Email    string `valid:"email"`
 	Password string `valid:"ascii"`
 	Role     string
@@ -70,11 +69,18 @@ func Configure(a core.App) {
 	App.R.HandleFunc("/api/users/reset", srvReset).Methods("POST")
 
 	//protect actions
-	App.R.HandleFunc("/api/users/get-all", App.Protect(srvGetAll, []string{"admin"})).Methods("GET")
-	App.R.HandleFunc("/api/users/get-one/{id}", App.Protect(srvGetOne, []string{"admin"})).Methods("GET")
-	App.R.HandleFunc("/api/users/create", App.Protect(srvCreate, []string{"admin"})).Methods("POST")
-	App.R.HandleFunc("/api/users/update", App.Protect(srvUpdate, []string{"admin"})).Methods("POST")
-	App.R.HandleFunc("/api/users/delete", App.Protect(srvDelete, []string{"admin"})).Methods("POST")
+	App.R.HandleFunc("/api/users", App.Protect(srvGetAll, []string{"admin"})).Methods("GET")
+	App.R.HandleFunc("/api/users/{id}", App.Protect(srvGetOne, []string{"admin"})).Methods("GET")
+	App.R.HandleFunc("/api/users", App.Protect(srvCreate, []string{"admin"})).Methods("POST")
+	App.R.HandleFunc("/api/users/{id}", App.Protect(srvUpdate, []string{"admin"})).Methods("PATCH")
+	App.R.HandleFunc("/api/users/{id}", App.Protect(srvDelete, []string{"admin"})).Methods("DELETE")
+
+	//for handle testing
+	//App.R.HandleFunc("/api/users", srvGetAll).Methods("GET")
+	//App.R.HandleFunc("/api/users/{id}", srvGetOne).Methods("GET")
+	//App.R.HandleFunc("/api/users", srvCreate).Methods("POST")
+	//App.R.HandleFunc("/api/users/{id}", srvUpdate).Methods("PATCH")
+	//App.R.HandleFunc("/api/users/{id}", srvDelete).Methods("DELETE")
 }
 
 func srvGetOne(w http.ResponseWriter, r *http.Request) {
@@ -147,16 +153,26 @@ func srvUpdate(w http.ResponseWriter, r *http.Request) {
 
 	if rsp.IsJsonParseDone(r.Body) {
 		if rsp.IsValidate() {
-			if data.ID == 0 {
-				rsp.Errors.Add("ID", "ID not set")
+
+			vars := mux.Vars(r)
+			App.DB.First(&user, vars["id"])
+
+			if user.ID == 0 {
+				rsp.Errors.Add("ID", "User not found")
 			} else {
-				App.DB.First(&user, data.ID)
-				if user.ID == 0 {
-					rsp.Errors.Add("ID", "User not found")
-				} else {
-					App.DB.Model(&user).Updates(data)
-				}
+				App.DB.Model(&user).Updates(data)
 			}
+
+			//if data.ID == 0 {
+			//rsp.Errors.Add("ID", "ID not set")
+			//} else {
+			//App.DB.First(&user, data.ID)
+			//if user.ID == 0 {
+			//rsp.Errors.Add("ID", "User not found")
+			//} else {
+			//App.DB.Model(&user).Updates(data)
+			//}
+			//}
 		}
 	}
 
@@ -167,21 +183,20 @@ func srvUpdate(w http.ResponseWriter, r *http.Request) {
 
 func srvDelete(w http.ResponseWriter, r *http.Request) {
 	var (
-		data User
 		user User
-		rsp  = core.Response{Data: &data}
+		rsp  = core.Response{Data: &user}
 	)
 
-	if rsp.IsJsonParseDone(r.Body) {
-		App.DB.First(&user, data.ID)
-		if user.ID == 0 {
-			rsp.Errors.Add("ID", "User not found")
+	vars := mux.Vars(r)
+	App.DB.First(&user, vars["id"])
+
+	if user.ID == 0 {
+		rsp.Errors.Add("ID", "User not found")
+	} else {
+		if App.IsTest {
+			App.DB.Unscoped().Delete(&user)
 		} else {
-			if App.IsTest {
-				App.DB.Unscoped().Delete(&user)
-			} else {
-				App.DB.Delete(&user)
-			}
+			App.DB.Delete(&user)
 		}
 	}
 
