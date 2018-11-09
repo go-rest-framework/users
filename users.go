@@ -105,9 +105,37 @@ func srvGetAll(w http.ResponseWriter, r *http.Request) {
 	var (
 		users Users
 		rsp   = core.Response{Data: &users}
+		all   = r.FormValue("all")
+		id    = r.FormValue("id")
+		email = r.FormValue("email")
+		role  = r.FormValue("role")
+		sort  = r.FormValue("sort")
+		db    = App.DB
 	)
 
-	App.DB.Find(&users)
+	if all != "" {
+		db = db.Where("id LIKE ?", "%"+all+"%")
+		db = db.Or("email LIKE ?", "%"+all+"%")
+		db = db.Or("role LIKE ?", "%"+all+"%")
+	}
+
+	if id != "" {
+		db = db.Where("id LIKE ?", "%"+id+"%")
+	}
+
+	if email != "" {
+		db = db.Where("email LIKE ?", "%"+email+"%")
+	}
+
+	if role != "" {
+		db = db.Where("role LIKE ?", "%"+role+"%")
+	}
+
+	if sort != "" {
+		db = db.Order(sort)
+	}
+
+	db.Find(&users)
 
 	rsp.Data = &users
 
@@ -162,17 +190,6 @@ func srvUpdate(w http.ResponseWriter, r *http.Request) {
 			} else {
 				App.DB.Model(&user).Updates(data)
 			}
-
-			//if data.ID == 0 {
-			//rsp.Errors.Add("ID", "ID not set")
-			//} else {
-			//App.DB.First(&user, data.ID)
-			//if user.ID == 0 {
-			//rsp.Errors.Add("ID", "User not found")
-			//} else {
-			//App.DB.Model(&user).Updates(data)
-			//}
-			//}
 		}
 	}
 

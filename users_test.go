@@ -337,6 +337,45 @@ func TestGetAll(t *testing.T) {
 		t.Fatal(u.Errors)
 	}
 
+	url1 := Murl + "?email=" + UNewEmail
+
+	resp1 := doRequest(url1, "GET", "", AdminToken)
+
+	if resp1.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp1.StatusCode)
+	}
+
+	u1 := readUsersBody(resp1, t)
+
+	if len(u1.Errors) != 0 {
+		t.Fatal(u1.Errors)
+	}
+
+	if len(u1.Data) != 1 {
+		fmt.Println(u1.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u1.Data))
+	}
+
+	//---------------
+
+	url2 := Murl + "?sort=ID"
+
+	resp2 := doRequest(url2, "GET", "", AdminToken)
+
+	if resp2.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp2.StatusCode)
+	}
+
+	u2 := readUsersBody(resp2, t)
+
+	if len(u2.Errors) != 0 {
+		t.Fatal(u2.Errors)
+	}
+
+	if !(u2.Data[0].ID < u2.Data[1].ID && u2.Data[1].ID < u2.Data[2].ID) {
+		t.Fatal("sorting dont work")
+	}
+
 	return
 }
 
