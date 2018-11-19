@@ -26,6 +26,8 @@ type User struct {
 	Salt        string `json:"-"`
 	CheckToken  string `json:"-"`
 	CallBackUrl string `gorm:"-"`
+	Profile     Profile
+	ProfileID   int
 }
 
 type UserUpdate struct {
@@ -57,7 +59,7 @@ type Reset struct {
 func Configure(a core.App) {
 	App = a
 
-	App.DB.AutoMigrate(&User{})
+	App.DB.AutoMigrate(&User{}, &Profile{})
 
 	createAdmin()
 

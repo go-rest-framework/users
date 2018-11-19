@@ -19,6 +19,7 @@ var Uidnew uint
 var UEmail string
 var UNewEmail string
 var AdminToken string
+var UProfileName string
 var Murl = "http://gorest.ga/api/users"
 
 type TestUsers struct {
@@ -290,11 +291,18 @@ func TestAdminLogin(t *testing.T) {
 //"/api/users/create", App.Protect(srvCreate, []string{"admin"})).Methods("POST")
 func TestCreate(t *testing.T) {
 	UNewEmail = fake.EmailAddress()
+	UProfileName = fake.FirstName()
 	url := Murl
 	userJson := `{
 		"Email":"` + UNewEmail + `",
 		"Password":"newuserpass",
-		"Role":"user"
+		"Role":"user",
+		"Profile":{
+			"Firstname":"` + UProfileName + `",
+			"Middlename":"` + fake.FirstName() + `",
+			"Lastname":"` + fake.LastName() + `",
+			"Phone":"` + fake.Phone() + `"
+		}
 	}`
 
 	resp := doRequest(url, "POST", userJson, AdminToken)
@@ -310,6 +318,12 @@ func TestCreate(t *testing.T) {
 	}
 
 	Uidnew = u.Data.ID
+
+	fmt.Println(u.Data.Profile.Firstname)
+
+	if u.Data.Profile.Firstname != UProfileName {
+		t.Fatal("wrong user profile firstname")
+	}
 
 	return
 }
@@ -410,6 +424,10 @@ func TestGetOne(t *testing.T) {
 
 	if u.Data.Email != UEmail {
 		t.Fatal("wrong email get")
+	}
+
+	if u.Data.Profile.Firstname != UProfileName {
+		t.Fatal("wrong user profile firstname")
 	}
 
 	return
