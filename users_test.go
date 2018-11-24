@@ -32,6 +32,11 @@ type TestUser struct {
 	Data   users.User
 }
 
+type TestProfile struct {
+	Errors []core.ErrorMsg
+	Data   users.Profile
+}
+
 func readUsersBody(r *http.Response, t *testing.T) TestUsers {
 	var u TestUsers
 	body, err := ioutil.ReadAll(r.Body)
@@ -65,6 +70,17 @@ func readUserBody(r *http.Response, t *testing.T) TestUser {
 	json.Unmarshal([]byte(body), &u)
 	defer r.Body.Close()
 	return u
+}
+
+func readProfileBody(r *http.Response, t *testing.T) TestProfile {
+	var p TestProfile
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	json.Unmarshal([]byte(body), &p)
+	defer r.Body.Close()
+	return p
 }
 
 //"/api/users/register", srvRegister).Methods("POST")
@@ -408,7 +424,7 @@ func TestGetOne(t *testing.T) {
 		t.Fatal("element not found dont work")
 	}
 
-	url = fmt.Sprintf("%s%s%d", Murl, "/", Uid)
+	url = fmt.Sprintf("%s%s%d", Murl, "/", Uidnew)
 
 	resp = doRequest(url, "GET", "", AdminToken)
 
@@ -422,11 +438,33 @@ func TestGetOne(t *testing.T) {
 		t.Fatal(u.Errors)
 	}
 
-	if u.Data.Email != UEmail {
+	if u.Data.Email != UNewEmail {
 		t.Fatal("wrong email get")
 	}
 
 	if u.Data.Profile.Firstname != UProfileName {
+		t.Fatal("wrong user profile firstname")
+	}
+
+	return
+}
+
+func TestGetOneProfile(t *testing.T) {
+	url := fmt.Sprintf("%s%s%d%s", Murl, "/", Uidnew, "/profile")
+
+	resp := doRequest(url, "GET", "", "")
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	p := readProfileBody(resp, t)
+
+	if len(p.Errors) != 0 {
+		t.Fatal(p.Errors)
+	}
+
+	if p.Data.Firstname != UProfileName {
 		t.Fatal("wrong user profile firstname")
 	}
 

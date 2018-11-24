@@ -64,35 +64,37 @@ func Configure(a core.App) {
 	createAdmin()
 
 	//public actions
-	App.R.HandleFunc("/api/users/register", srvRegister).Methods("POST")
-	App.R.HandleFunc("/api/users/login", srvLogin).Methods("POST")
-	App.R.HandleFunc("/api/users/confirm", srvConfirm).Methods("POST")
-	App.R.HandleFunc("/api/users/resetrequest", srvResetrequest).Methods("POST")
-	App.R.HandleFunc("/api/users/reset", srvReset).Methods("POST")
+	App.R.HandleFunc("/api/users/register", actionRegister).Methods("POST")
+	App.R.HandleFunc("/api/users/login", actionLogin).Methods("POST")
+	App.R.HandleFunc("/api/users/confirm", actionConfirm).Methods("POST")
+	App.R.HandleFunc("/api/users/resetrequest", actionResetrequest).Methods("POST")
+	App.R.HandleFunc("/api/users/reset", actionReset).Methods("POST")
+
+	App.R.HandleFunc("/api/users/{id}/profile", actionGetProfile).Methods("GET")
 
 	//protect actions
-	App.R.HandleFunc("/api/users", App.Protect(srvGetAll, []string{"admin"})).Methods("GET")
-	App.R.HandleFunc("/api/users/{id}", App.Protect(srvGetOne, []string{"admin"})).Methods("GET")
-	App.R.HandleFunc("/api/users", App.Protect(srvCreate, []string{"admin"})).Methods("POST")
-	App.R.HandleFunc("/api/users/{id}", App.Protect(srvUpdate, []string{"admin"})).Methods("PATCH")
-	App.R.HandleFunc("/api/users/{id}", App.Protect(srvDelete, []string{"admin"})).Methods("DELETE")
+	App.R.HandleFunc("/api/users", App.Protect(actionGetAll, []string{"admin"})).Methods("GET")
+	App.R.HandleFunc("/api/users/{id}", App.Protect(actionGetOne, []string{"admin"})).Methods("GET")
+	App.R.HandleFunc("/api/users", App.Protect(actionCreate, []string{"admin"})).Methods("POST")
+	App.R.HandleFunc("/api/users/{id}", App.Protect(actionUpdate, []string{"admin"})).Methods("PATCH")
+	App.R.HandleFunc("/api/users/{id}", App.Protect(actionDelete, []string{"admin"})).Methods("DELETE")
 
 	//for handle testing
-	//App.R.HandleFunc("/api/users", srvGetAll).Methods("GET")
-	//App.R.HandleFunc("/api/users/{id}", srvGetOne).Methods("GET")
-	//App.R.HandleFunc("/api/users", srvCreate).Methods("POST")
-	//App.R.HandleFunc("/api/users/{id}", srvUpdate).Methods("PATCH")
-	//App.R.HandleFunc("/api/users/{id}", srvDelete).Methods("DELETE")
+	//App.R.HandleFunc("/api/users", actionGetAll).Methods("GET")
+	//App.R.HandleFunc("/api/users/{id}", actionGetOne).Methods("GET")
+	//App.R.HandleFunc("/api/users", actionCreate).Methods("POST")
+	//App.R.HandleFunc("/api/users/{id}", actionUpdate).Methods("PATCH")
+	//App.R.HandleFunc("/api/users/{id}", actionDelete).Methods("DELETE")
 }
 
-func srvGetOne(w http.ResponseWriter, r *http.Request) {
+func actionGetOne(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
 		rsp  = core.Response{Data: &user}
 	)
 
 	vars := mux.Vars(r)
-	App.DB.First(&user, vars["id"])
+	App.DB.Preload("Profile").First(&user, vars["id"])
 
 	if user.ID == 0 {
 		rsp.Errors.Add("ID", "User not found")
@@ -103,7 +105,7 @@ func srvGetOne(w http.ResponseWriter, r *http.Request) {
 	w.Write(rsp.Make())
 }
 
-func srvGetAll(w http.ResponseWriter, r *http.Request) {
+func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	var (
 		users Users
 		rsp   = core.Response{Data: &users}
@@ -137,14 +139,16 @@ func srvGetAll(w http.ResponseWriter, r *http.Request) {
 		db = db.Order(sort)
 	}
 
-	db.Find(&users)
+	db.Preload("Profile").Find(&users)
 
 	rsp.Data = &users
+
+	fmt.Printf("%#v", users)
 
 	w.Write(rsp.Make())
 }
 
-func srvCreate(w http.ResponseWriter, r *http.Request) {
+func actionCreate(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
 		rsp  = core.Response{Data: &user}
@@ -174,7 +178,7 @@ func srvCreate(w http.ResponseWriter, r *http.Request) {
 	w.Write(rsp.Make())
 }
 
-func srvUpdate(w http.ResponseWriter, r *http.Request) {
+func actionUpdate(w http.ResponseWriter, r *http.Request) {
 	var (
 		data UserUpdate
 		user User
@@ -200,7 +204,7 @@ func srvUpdate(w http.ResponseWriter, r *http.Request) {
 	w.Write(rsp.Make())
 }
 
-func srvDelete(w http.ResponseWriter, r *http.Request) {
+func actionDelete(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
 		rsp  = core.Response{Data: &user}
@@ -224,7 +228,7 @@ func srvDelete(w http.ResponseWriter, r *http.Request) {
 	w.Write(rsp.Make())
 }
 
-func srvLogin(w http.ResponseWriter, r *http.Request) {
+func actionLogin(w http.ResponseWriter, r *http.Request) {
 	var (
 		data Login
 		user User
@@ -258,7 +262,7 @@ func srvLogin(w http.ResponseWriter, r *http.Request) {
 	w.Write(rsp.Make())
 }
 
-func srvRegister(w http.ResponseWriter, r *http.Request) {
+func actionRegister(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
 		rsp  = core.Response{Data: &user}
@@ -303,7 +307,7 @@ func srvRegister(w http.ResponseWriter, r *http.Request) {
 	w.Write(rsp.Make())
 }
 
-func srvConfirm(w http.ResponseWriter, r *http.Request) {
+func actionConfirm(w http.ResponseWriter, r *http.Request) {
 	var (
 		data Confirm
 		user User
@@ -334,7 +338,7 @@ func srvConfirm(w http.ResponseWriter, r *http.Request) {
 	w.Write(rsp.Make())
 }
 
-func srvResetrequest(w http.ResponseWriter, r *http.Request) {
+func actionResetrequest(w http.ResponseWriter, r *http.Request) {
 	var (
 		data ResetRequest
 		user User
@@ -377,7 +381,7 @@ func srvResetrequest(w http.ResponseWriter, r *http.Request) {
 	w.Write(rsp.Make())
 }
 
-func srvReset(w http.ResponseWriter, r *http.Request) {
+func actionReset(w http.ResponseWriter, r *http.Request) {
 	var (
 		data Reset
 		user User
@@ -432,4 +436,23 @@ func createAdmin() {
 		user.Role = "admin"
 		App.DB.Create(&user)
 	}
+}
+
+func actionGetProfile(w http.ResponseWriter, r *http.Request) {
+	var (
+		user    User
+		profile Profile
+		rsp     = core.Response{Data: &profile}
+	)
+
+	vars := mux.Vars(r)
+	App.DB.First(&user, vars["id"]).Related(&profile)
+
+	if user.ID == 0 {
+		rsp.Errors.Add("ID", "User not found")
+	} else {
+		rsp.Data = &profile
+	}
+
+	w.Write(rsp.Make())
 }
