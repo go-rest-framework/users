@@ -143,8 +143,6 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 
 	rsp.Data = &users
 
-	fmt.Printf("%#v", users)
-
 	w.Write(rsp.Make())
 }
 
