@@ -62,6 +62,7 @@ func Configure(a core.App) {
 	App.DB.AutoMigrate(&User{}, &Profile{})
 
 	createAdmin()
+	createTestUser()
 
 	//public actions
 	App.R.HandleFunc("/api/users/register", actionRegister).Methods("POST")
@@ -241,7 +242,8 @@ func actionLogin(w http.ResponseWriter, r *http.Request) {
 			} else if user.Role == "" || user.Role == "candidate" {
 				rsp.Errors.Add("Email", "You have not verified your email address")
 			} else {
-				token, err := App.GenToken(&user.Email, &user.Role)
+				idstring := fmt.Sprintf("%d", user.ID)
+				token, err := App.GenToken(&idstring, &user.Email, &user.Role)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					rsp.Errors.Add("Email", "Error generating JWT token: "+err.Error())
@@ -425,13 +427,42 @@ func createAdmin() {
 			user.Password = curtime[1:16]
 		}
 
-		fmt.Printf("%s\n", user.Password)
+		fmt.Printf("admin password: %s\n", user.Password)
 
 		passhash := App.ToSum256(user.Password + passsalt)
 
 		user.Password = passhash
 		user.Salt = passsalt
 		user.Role = "admin"
+		App.DB.Create(&user)
+	}
+}
+
+func createTestUser() {
+	var (
+		user User
+	)
+
+	user.Email = "testuser@test.t"
+
+	App.DB.Where("email = ?", user.Email).First(&user)
+	if user.ID == 0 {
+		curtime := fmt.Sprintf("%x", time.Now())
+		passsalt := App.ToSum256(curtime)
+
+		if App.IsTest {
+			user.Password = "testpass"
+		} else {
+			user.Password = curtime[1:16]
+		}
+
+		fmt.Printf("testuser password: %s\n", user.Password)
+
+		passhash := App.ToSum256(user.Password + passsalt)
+
+		user.Password = passhash
+		user.Salt = passsalt
+		user.Role = "user"
 		App.DB.Create(&user)
 	}
 }
