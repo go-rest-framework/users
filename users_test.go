@@ -23,18 +23,18 @@ var UProfileName string
 var Murl = "http://gorest.ga/api/users"
 
 type TestUsers struct {
-	Errors []core.ErrorMsg
-	Data   users.Users
+	Errors []core.ErrorMsg `json:"errors"`
+	Data   users.Users     `json:"data"`
 }
 
 type TestUser struct {
-	Errors []core.ErrorMsg
-	Data   users.User
+	Errors []core.ErrorMsg `json:"errors"`
+	Data   users.User      `json:"data"`
 }
 
 type TestProfile struct {
-	Errors []core.ErrorMsg
-	Data   users.Profile
+	Errors []core.ErrorMsg `json:"errors"`
+	Data   users.Profile   `json:"data"`
 }
 
 func readUsersBody(r *http.Response, t *testing.T) TestUsers {
@@ -89,7 +89,7 @@ func TestRegister(t *testing.T) {
 	UEmail = fake.EmailAddress()
 
 	url := Murl + "/register"
-	userJson := `{"Email":"sldfjsdlfeusdlfjsdlfj", "Password":"343223423423"}`
+	userJson := `{"email":"sldfjsdlfeusdlfjsdlfj", "password":"343223423423"}`
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -103,7 +103,7 @@ func TestRegister(t *testing.T) {
 		t.Fatal("email type validation dont work")
 	}
 
-	userJson = `{"Email":"sdlfjldjflsdf@sldfjsdlf.eu"}`
+	userJson = `{"email":"sdlfjldjflsdf@sldfjsdlf.eu"}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -117,7 +117,7 @@ func TestRegister(t *testing.T) {
 		t.Fatal("require validation dont work")
 	}
 
-	userJson = `{"Email":"` + UEmail + `", "Password":"343223423423"}`
+	userJson = `{"email":"` + UEmail + `", "password":"343223423423"}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -140,7 +140,7 @@ func TestRegister(t *testing.T) {
 func TestConfirm(t *testing.T) {
 
 	url := Murl + "/confirm"
-	var userJson = `{"CheckToken":"wrongtoken"}`
+	var userJson = `{"checkToken":"wrongtoken"}`
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -168,7 +168,7 @@ func TestConfirm(t *testing.T) {
 		t.Fatal("require validation dont work")
 	}
 
-	userJson = `{"CheckToken":"testchecktoken"}`
+	userJson = `{"checkToken":"testchecktoken"}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -189,7 +189,7 @@ func TestConfirm(t *testing.T) {
 func TestLogin(t *testing.T) {
 
 	url := Murl + "/login"
-	var userJson = `{"Email":"sdlf@eusdlfjsdlfj.com", "Password":"dddd343223423423"}`
+	var userJson = `{"email":"sdlf@eusdlfjsdlfj.com", "password":"dddd343223423423"}`
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -203,7 +203,7 @@ func TestLogin(t *testing.T) {
 		t.Fatal("password check fail")
 	}
 
-	userJson = `{"Email":"` + UEmail + `"}`
+	userJson = `{"email":"` + UEmail + `"}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -217,7 +217,7 @@ func TestLogin(t *testing.T) {
 		t.Fatal("require validation dont work")
 	}
 
-	userJson = `{"Email":"` + UEmail + `", "Password":"343223423423"}`
+	userJson = `{"email":"` + UEmail + `", "password":"343223423423"}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -238,7 +238,7 @@ func TestLogin(t *testing.T) {
 func TestResetrequest(t *testing.T) {
 
 	url := Murl + "/resetrequest"
-	var userJson = `{"Email":"` + UEmail + `", "CallBackUrl":"http://test.ttt"}`
+	var userJson = `{"email":"` + UEmail + `", "callBackUrl":"http://test.ttt"}`
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -254,9 +254,9 @@ func TestReset(t *testing.T) {
 
 	url := Murl + "/reset"
 	var userJson = `{
-		"CheckToken":"testchecktoken",
-		"Newpass":"newpass",
-		"NewpassRe":"newpass1"
+		"checkToken":"testchecktoken",
+		"newpass":"newpass",
+		"newpassRe":"newpass1"
 	}`
 
 	resp := doRequest(url, "POST", userJson, "")
@@ -272,9 +272,9 @@ func TestReset(t *testing.T) {
 	}
 
 	userJson = `{
-		"CheckToken":"testchecktoken",
-		"Newpass":"newpass",
-		"NewpassRe":"newpass"
+		"checkToken":"testchecktoken",
+		"newpass":"newpass",
+		"newpassRe":"newpass"
 	}`
 
 	resp = doRequest(url, "POST", userJson, "")
@@ -289,7 +289,7 @@ func TestReset(t *testing.T) {
 func TestAdminLogin(t *testing.T) {
 
 	url := Murl + "/login"
-	var userJson = `{"Email":"admin@admin.a", "Password":"adminpass"}`
+	var userJson = `{"email":"admin@admin.a", "password":"adminpass"}`
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -310,14 +310,14 @@ func TestCreate(t *testing.T) {
 	UProfileName = fake.FirstName()
 	url := Murl
 	userJson := `{
-		"Email":"` + UNewEmail + `",
-		"Password":"newuserpass",
-		"Role":"user",
-		"Profile":{
-			"Firstname":"` + UProfileName + `",
-			"Middlename":"` + fake.FirstName() + `",
-			"Lastname":"` + fake.LastName() + `",
-			"Phone":"` + fake.Phone() + `"
+		"email":"` + UNewEmail + `",
+		"password":"newuserpass",
+		"role":"user",
+		"profile":{
+			"firstname":"` + UProfileName + `",
+			"middlename":"` + fake.FirstName() + `",
+			"lastname":"` + fake.LastName() + `",
+			"phone":"` + fake.Phone() + `"
 		}
 	}`
 
@@ -474,7 +474,7 @@ func TestGetOneProfile(t *testing.T) {
 //"/api/users/update", App.Protect(srvUpdate, []string{"admin"})).Methods("POST")
 func TestUpdate(t *testing.T) {
 	url := fmt.Sprintf("%s%s%d", Murl, "/", Uid)
-	userJson := `{"Email":"sldfjsdlfeusdlfjsdlfj", "Password":"343223423423"}`
+	userJson := `{"email":"sldfjsdlfeusdlfjsdlfj", "password":"343223423423"}`
 
 	resp := doRequest(url, "PATCH", userJson, AdminToken)
 
@@ -489,7 +489,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	url = fmt.Sprintf("%s%s%d", Murl, "/", Uidnew)
-	userJson = `{"Role":"admin"}`
+	userJson = `{"role":"admin"}`
 
 	resp = doRequest(url, "PATCH", userJson, AdminToken)
 

@@ -19,41 +19,41 @@ type Users []User
 
 type User struct {
 	gorm.Model
-	Email       string `gorm:"unique;not null" valid:"email,required,unique~Email not unique"`
-	Password    string `valid:"ascii,required"`
-	Role        string
-	Token       string
-	Salt        string `json:"-"`
-	CheckToken  string `json:"-"`
-	CallBackUrl string `gorm:"-"`
-	Profile     Profile
-	ProfileID   int
+	Email       string  `json:"email" gorm:"unique;not null" valid:"email,required,unique~Email not unique"`
+	Password    string  `json:"password" valid:"ascii,required"`
+	Role        string  `json:"role"`
+	Token       string  `json:"token"`
+	Salt        string  `json:"-"`
+	CheckToken  string  `json:"-"`
+	CallBackUrl string  `gorm:"-"`
+	Profile     Profile `json:"profile"`
+	ProfileID   int     `json:"profileID"`
 }
 
 type UserUpdate struct {
-	Email    string `valid:"email"`
-	Password string `valid:"ascii"`
-	Role     string
+	Email    string `json:"email" valid:"email"`
+	Password string `json:"password" valid:"ascii"`
+	Role     string `json:"role"`
 }
 
 type Login struct {
-	Email    string `valid:"email,required"`
-	Password string `valid:"ascii,required"`
+	Email    string `valid:"email,required" json:"email"`
+	Password string `valid:"ascii,required" json:"password"`
 }
 
 type Confirm struct {
-	CheckToken string `valid:"required"`
+	CheckToken string `json:"checkToken" valid:"required"`
 }
 
 type ResetRequest struct {
-	Email       string `valid:"email,required"`
-	CallBackUrl string
+	Email       string `json:"email" valid:"email,required"`
+	CallBackUrl string `json:"callBackUrl"`
 }
 
 type Reset struct {
-	CheckToken string `valid:"required"`
-	Newpass    string `valid:"required"`
-	NewpassRe  string `valid:"required"`
+	CheckToken string `json:"checkToken" valid:"required"`
+	Newpass    string `json:"newpass" valid:"required"`
+	NewpassRe  string `json:"newpassRe" valid:"required"`
 }
 
 func Configure(a core.App) {
@@ -238,15 +238,15 @@ func actionLogin(w http.ResponseWriter, r *http.Request) {
 		if rsp.IsValidate() {
 			App.DB.Where("email = ?", data.Email).First(&user)
 			if user.ID == 0 || user.Password != App.ToSum256(data.Password+user.Salt) {
-				rsp.Errors.Add("Email", "User not found or wrong password")
+				rsp.Errors.Add("email", "User not found or wrong password")
 			} else if user.Role == "" || user.Role == "candidate" {
-				rsp.Errors.Add("Email", "You have not verified your email address")
+				rsp.Errors.Add("email", "You have not verified your email address")
 			} else {
 				idstring := fmt.Sprintf("%d", user.ID)
 				token, err := App.GenToken(&idstring, &user.Email, &user.Role)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					rsp.Errors.Add("Email", "Error generating JWT token: "+err.Error())
+					rsp.Errors.Add("email", "Error generating JWT token: "+err.Error())
 				} else {
 					w.Header().Set("Authorization", "Bearer "+token)
 					w.WriteHeader(http.StatusOK)

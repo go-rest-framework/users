@@ -4,8 +4,8 @@ import "github.com/jinzhu/gorm"
 
 type Profile struct {
 	gorm.Model
-	Firstname  string
-	Middlename string
-	Lastname   string
-	Phone      string
+	Firstname  string `json:"firstname"`
+	Middlename string `json:"middlename"`
+	Lastname   string `json:"lastname"`
+	Phone      string `json:"phone"`
 }
