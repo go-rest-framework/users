@@ -91,7 +91,7 @@ func Configure(a core.App) {
 func actionGetOne(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
-		rsp  = core.Response{Data: &user}
+		rsp  = core.Response{Data: &user, Req: r}
 	)
 
 	vars := mux.Vars(r)
@@ -109,7 +109,7 @@ func actionGetOne(w http.ResponseWriter, r *http.Request) {
 func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	var (
 		users Users
-		rsp   = core.Response{Data: &users}
+		rsp   = core.Response{Data: &users, Req: r}
 		all   = r.FormValue("all")
 		id    = r.FormValue("id")
 		email = r.FormValue("email")
@@ -150,7 +150,7 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 func actionCreate(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
-		rsp  = core.Response{Data: &user}
+		rsp  = core.Response{Data: &user, Req: r}
 	)
 
 	govalidator.TagMap["unique"] = govalidator.Validator(func(str string) bool {
@@ -181,7 +181,7 @@ func actionUpdate(w http.ResponseWriter, r *http.Request) {
 	var (
 		data UserUpdate
 		user User
-		rsp  = core.Response{Data: &data}
+		rsp  = core.Response{Data: &data, Req: r}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -206,7 +206,7 @@ func actionUpdate(w http.ResponseWriter, r *http.Request) {
 func actionDelete(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
-		rsp  = core.Response{Data: &user}
+		rsp  = core.Response{Data: &user, Req: r}
 	)
 
 	vars := mux.Vars(r)
@@ -231,7 +231,7 @@ func actionLogin(w http.ResponseWriter, r *http.Request) {
 	var (
 		data Login
 		user User
-		rsp  = core.Response{Data: &data}
+		rsp  = core.Response{Data: &data, Req: r}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -265,7 +265,7 @@ func actionLogin(w http.ResponseWriter, r *http.Request) {
 func actionRegister(w http.ResponseWriter, r *http.Request) {
 	var (
 		user User
-		rsp  = core.Response{Data: &user}
+		rsp  = core.Response{Data: &user, Req: r}
 	)
 
 	govalidator.TagMap["unique"] = govalidator.Validator(func(str string) bool {
@@ -311,7 +311,7 @@ func actionConfirm(w http.ResponseWriter, r *http.Request) {
 	var (
 		data Confirm
 		user User
-		rsp  = core.Response{Data: &data}
+		rsp  = core.Response{Data: &data, Req: r}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -342,7 +342,7 @@ func actionResetrequest(w http.ResponseWriter, r *http.Request) {
 	var (
 		data ResetRequest
 		user User
-		rsp  = core.Response{Data: &data}
+		rsp  = core.Response{Data: &data, Req: r}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -385,7 +385,7 @@ func actionReset(w http.ResponseWriter, r *http.Request) {
 	var (
 		data Reset
 		user User
-		rsp  = core.Response{Data: &data}
+		rsp  = core.Response{Data: &data, Req: r}
 	)
 
 	if rsp.IsJsonParseDone(r.Body) {
@@ -471,7 +471,7 @@ func actionGetProfile(w http.ResponseWriter, r *http.Request) {
 	var (
 		user    User
 		profile Profile
-		rsp     = core.Response{Data: &profile}
+		rsp     = core.Response{Data: &profile, Req: r}
 	)
 
 	vars := mux.Vars(r)
