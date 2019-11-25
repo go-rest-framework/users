@@ -20,7 +20,7 @@ var UEmail string
 var UNewEmail string
 var AdminToken string
 var UProfileName string
-var Murl = "http://gorest.ga/api/users"
+var Murl = "http://localhost/api/users"
 
 type TestUsers struct {
 	Errors []core.ErrorMsg `json:"errors"`
