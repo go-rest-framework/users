@@ -65,27 +65,20 @@ func Configure(a core.App) {
 	createTestUser()
 
 	//public actions
-	App.R.HandleFunc("/api/users/register", actionRegister).Methods("POST")
-	App.R.HandleFunc("/api/users/login", actionLogin).Methods("POST")
-	App.R.HandleFunc("/api/users/confirm", actionConfirm).Methods("POST")
-	App.R.HandleFunc("/api/users/resetrequest", actionResetrequest).Methods("POST")
-	App.R.HandleFunc("/api/users/reset", actionReset).Methods("POST")
+	App.R.HandleFunc("/users/register", actionRegister).Methods("POST")
+	App.R.HandleFunc("/users/login", actionLogin).Methods("POST")
+	App.R.HandleFunc("/users/confirm", actionConfirm).Methods("POST")
+	App.R.HandleFunc("/users/resetrequest", actionResetrequest).Methods("POST")
+	App.R.HandleFunc("/users/reset", actionReset).Methods("POST")
 
-	App.R.HandleFunc("/api/users/{id}/profile", actionGetProfile).Methods("GET")
+	App.R.HandleFunc("/users/{id}/profile", actionGetProfile).Methods("GET")
 
 	//protect actions
-	App.R.HandleFunc("/api/users", App.Protect(actionGetAll, []string{"admin"})).Methods("GET")
-	App.R.HandleFunc("/api/users/{id}", App.Protect(actionGetOne, []string{"admin"})).Methods("GET")
-	App.R.HandleFunc("/api/users", App.Protect(actionCreate, []string{"admin"})).Methods("POST")
-	App.R.HandleFunc("/api/users/{id}", App.Protect(actionUpdate, []string{"admin"})).Methods("PATCH")
-	App.R.HandleFunc("/api/users/{id}", App.Protect(actionDelete, []string{"admin"})).Methods("DELETE")
-
-	//for handle testing
-	//App.R.HandleFunc("/api/users", actionGetAll).Methods("GET")
-	//App.R.HandleFunc("/api/users/{id}", actionGetOne).Methods("GET")
-	//App.R.HandleFunc("/api/users", actionCreate).Methods("POST")
-	//App.R.HandleFunc("/api/users/{id}", actionUpdate).Methods("PATCH")
-	//App.R.HandleFunc("/api/users/{id}", actionDelete).Methods("DELETE")
+	App.R.HandleFunc("/users", App.Protect(actionGetAll, []string{"admin"})).Methods("GET")
+	App.R.HandleFunc("/users/{id}", App.Protect(actionGetOne, []string{"admin"})).Methods("GET")
+	App.R.HandleFunc("/users", App.Protect(actionCreate, []string{"admin"})).Methods("POST")
+	App.R.HandleFunc("/users/{id}", App.Protect(actionUpdate, []string{"admin"})).Methods("PATCH")
+	App.R.HandleFunc("/users/{id}", App.Protect(actionDelete, []string{"admin"})).Methods("DELETE")
 }
 
 func actionGetOne(w http.ResponseWriter, r *http.Request) {
