@@ -19,9 +19,10 @@ type Users []User
 
 type User struct {
 	gorm.Model
-	Email       string  `json:"email" gorm:"unique;not null" valid:"email,required,unique~Email not unique"`
+	Email       string  `json:"email" gorm:"unique;not null" valid:"email,required,unique~email: Email not unique"`
 	Password    string  `json:"password" valid:"ascii,required"`
-	Role        string  `json:"role"`
+	RePassword  string  `gorm:"-" json:"repassword" valid:"ascii,required,passmatch~repassword: Passwords do not match"`
+	Role        string  `json:"role" valid:"required"`
 	Token       string  `json:"token"`
 	Salt        string  `json:"-"`
 	CheckToken  string  `json:"-"`
@@ -31,9 +32,9 @@ type User struct {
 }
 
 type UserUpdate struct {
-	Email    string `json:"email" valid:"email"`
-	Password string `json:"password" valid:"ascii"`
-	Role     string `json:"role"`
+	Email   string  `json:"email" valid:"email"`
+	Role    string  `json:"role"`
+	Profile Profile `json:"profile"`
 }
 
 type Login struct {
@@ -54,6 +55,18 @@ type Reset struct {
 	CheckToken string `json:"checkToken" valid:"required"`
 	Newpass    string `json:"newpass" valid:"required"`
 	NewpassRe  string `json:"newpassRe" valid:"required"`
+}
+
+func init() {
+	govalidator.CustomTypeTagMap.Set("passmatch", govalidator.CustomTypeValidator(func(i interface{}, context interface{}) bool {
+		switch v := context.(type) { // this validates a field against the value in another field, i.e. dependent validation
+		case User:
+			if i == v.Password {
+				return true
+			}
+		}
+		return false
+	}))
 }
 
 func Configure(a core.App) {
