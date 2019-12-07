@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -20,7 +21,7 @@ type Users []User
 type User struct {
 	gorm.Model
 	Email       string  `json:"email" gorm:"unique;not null" valid:"email,required,unique~email: Email not unique"`
-	Password    string  `json:"password" valid:"ascii,required"`
+	Password    string  `json:"password" valid:"ascii,required,passcomplexity~password: Password must be at least 8 characters long and contain letters & uppercase letters & numbers & foam marks"`
 	RePassword  string  `gorm:"-" json:"repassword" valid:"ascii,required,passmatch~repassword: Passwords do not match"`
 	Role        string  `json:"role" valid:"required"`
 	Token       string  `json:"token"`
@@ -67,6 +68,23 @@ func init() {
 		}
 		return false
 	}))
+	govalidator.TagMap["passcomplexity"] = govalidator.Validator(func(str string) bool {
+		var valid1 = regexp.MustCompile(`\W+|_`)
+		var valid2 = regexp.MustCompile(`[a-z]`)
+		var valid3 = regexp.MustCompile(`[0-9]`)
+		var valid4 = regexp.MustCompile(`[A-Z]`)
+
+		var chk1 = len(valid1.FindAllStringSubmatch(str, -1))
+		var chk2 = len(valid2.FindAllStringSubmatch(str, -1))
+		var chk3 = len(valid3.FindAllStringSubmatch(str, -1))
+		var chk4 = len(valid4.FindAllStringSubmatch(str, -1))
+
+		if len(str) < 8 || chk1 < 1 || chk2 < 1 || chk3 < 1 || chk4 < 1 {
+			return false
+		}
+
+		return true
+	})
 }
 
 func Configure(a core.App) {
