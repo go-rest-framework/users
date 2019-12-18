@@ -229,20 +229,24 @@ func actionUpdate(w http.ResponseWriter, r *http.Request) {
 
 func actionDelete(w http.ResponseWriter, r *http.Request) {
 	var (
-		user User
-		rsp  = core.Response{Data: &user, Req: r}
+		user    User
+		profile Profile
+		rsp     = core.Response{Data: &user, Req: r}
 	)
 
 	vars := mux.Vars(r)
 	App.DB.First(&user, vars["id"])
+	App.DB.First(&profile, user.ProfileID)
 
 	if user.ID == 0 {
 		rsp.Errors.Add("ID", "User not found")
 	} else {
 		if App.IsTest {
 			App.DB.Unscoped().Delete(&user)
+			App.DB.Unscoped().Delete(&profile)
 		} else {
 			App.DB.Delete(&user)
+			App.DB.Delete(&profile)
 		}
 	}
 

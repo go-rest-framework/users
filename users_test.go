@@ -287,9 +287,10 @@ func TestReset(t *testing.T) {
 }*/
 
 func TestAdminLogin(t *testing.T) {
-
+	var userJson string
 	url := Murl + "/login"
-	var userJson = `{"email":"admin@admin.a", "password":"adminpass"}`
+
+	userJson = `{"email":"admin@admin.a", "password":"wrongpass"}`
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -299,6 +300,20 @@ func TestAdminLogin(t *testing.T) {
 
 	u := readUserBody(resp, t)
 
+	if len(u.Errors) == 0 {
+		t.Fatal("No error with wrong password")
+	}
+
+	userJson = `{"email":"admin@admin.a", "password":"adminpass"}`
+
+	resp = doRequest(url, "POST", userJson, "")
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u = readUserBody(resp, t)
+
 	AdminToken = u.Data.Token
 
 	return
@@ -306,19 +321,22 @@ func TestAdminLogin(t *testing.T) {
 
 //"/api/users/create", App.Protect(srvCreate, []string{"admin"})).Methods("POST")
 func TestCreate(t *testing.T) {
+	var userJson string
 	UNewEmail = fake.EmailAddress()
 	UProfileName = fake.FirstName()
 	url := Murl
-	userJson := `{
+	//negative empty role
+	userJson = `{
 		"email":"` + UNewEmail + `",
-		"password":"password1",
-		"repassword":"password1",
-		"role":"user",
+		"password":"good.PASS123",
+		"repassword":"good.PASS123",
+		"role":"",
 		"profile":{
 			"firstname":"` + UProfileName + `",
 			"middlename":"` + fake.FirstName() + `",
 			"lastname":"` + fake.LastName() + `",
-			"phone":"` + fake.Phone() + `"
+			"phone":"` + fake.Phone() + `",
+			"avatar":"00001100"
 		}
 	}`
 
@@ -329,6 +347,109 @@ func TestCreate(t *testing.T) {
 	}
 
 	u := readUserBody(resp, t)
+
+	if len(u.Errors) == 0 {
+		t.Fatal("no error if no role")
+	}
+	//negative wrong email format
+	userJson = `{
+		"email":"sdlfjsdflsdfsdfsdf",
+		"password":"good.PASS123",
+		"repassword":"good.PASS123",
+		"role":"user",
+		"profile":{
+			"firstname":"` + UProfileName + `",
+			"middlename":"` + fake.FirstName() + `",
+			"lastname":"` + fake.LastName() + `",
+			"phone":"` + fake.Phone() + `",
+			"avatar":"00001100"
+		}
+	}`
+
+	resp = doRequest(url, "POST", userJson, AdminToken)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u = readUserBody(resp, t)
+
+	if len(u.Errors) == 0 {
+		t.Fatal("no error if wrong email format")
+	}
+	//negative no repass
+	userJson = `{
+		"email":"` + UNewEmail + `",
+		"password":"good.PASS123",
+		"repassword":"",
+		"role":"user",
+		"profile":{
+			"firstname":"` + UProfileName + `",
+			"middlename":"` + fake.FirstName() + `",
+			"lastname":"` + fake.LastName() + `",
+			"phone":"` + fake.Phone() + `",
+			"avatar":"00001100"
+		}
+	}`
+
+	resp = doRequest(url, "POST", userJson, AdminToken)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u = readUserBody(resp, t)
+	if len(u.Errors) == 0 {
+		t.Fatal("no error if no repass")
+	}
+	//negative low password complisity
+	userJson = `{
+		"email":"` + UNewEmail + `",
+		"password":"PASS123",
+		"repassword":"PASS123",
+		"role":"user",
+		"profile":{
+			"firstname":"` + UProfileName + `",
+			"middlename":"` + fake.FirstName() + `",
+			"lastname":"` + fake.LastName() + `",
+			"phone":"` + fake.Phone() + `",
+			"avatar":"00001100"
+		}
+	}`
+
+	resp = doRequest(url, "POST", userJson, AdminToken)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u = readUserBody(resp, t)
+	if len(u.Errors) == 0 {
+		t.Fatal("no error if low pass complisity")
+	}
+
+	//positive
+	userJson = `{
+		"email":"` + UNewEmail + `",
+		"password":"good.PASS123",
+		"repassword":"good.PASS123",
+		"role":"user",
+		"profile":{
+			"firstname":"` + UProfileName + `",
+			"middlename":"` + fake.FirstName() + `",
+			"lastname":"` + fake.LastName() + `",
+			"phone":"` + fake.Phone() + `",
+			"avatar":"00001100"
+		}
+	}`
+
+	resp = doRequest(url, "POST", userJson, AdminToken)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u = readUserBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
