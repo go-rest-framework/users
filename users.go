@@ -1,3 +1,6 @@
+//TODO
+// - add test for login not active user
+// - add test for protect aggriment not active user
 package users
 
 import (
@@ -5,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -24,6 +28,7 @@ type User struct {
 	Password    string  `json:"password" valid:"ascii,required,passcomplexity~password: Password must be at least 8 characters long and contain letters & uppercase letters & numbers & foam marks"`
 	RePassword  string  `gorm:"-" json:"repassword" valid:"ascii,required,passmatch~repassword: Passwords do not match"`
 	Role        string  `json:"role" valid:"required"`
+	Status      string  `json:"status" valid:"required,in(active|blocked|draft)"`
 	Token       string  `json:"token"`
 	Salt        string  `json:"-"`
 	CheckToken  string  `json:"-"`
@@ -132,36 +137,79 @@ func actionGetOne(w http.ResponseWriter, r *http.Request) {
 
 func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	var (
-		users Users
-		rsp   = core.Response{Data: &users, Req: r}
-		all   = r.FormValue("all")
-		id    = r.FormValue("id")
-		email = r.FormValue("email")
-		role  = r.FormValue("role")
-		sort  = r.FormValue("sort")
-		db    = App.DB
+		users  Users
+		rsp    = core.Response{Data: &users, Req: r}
+		all    = r.FormValue("all")
+		id     = r.FormValue("id")
+		email  = r.FormValue("email")
+		role   = r.FormValue("role")
+		status = r.FormValue("status")
+		name   = r.FormValue("name")
+		phone  = r.FormValue("phone")
+		sort   = r.FormValue("sort")
+		db     = App.DB
 	)
 
+	db = db.Select(`
+		users.id,
+		users.email,
+		users.role,
+		users.status,
+		users.profile_id,
+		profiles.id,
+		profiles.phone,
+		profiles.firstname,
+		profiles.lastname,
+		profiles.middlename
+	`)
+	db = db.Joins("LEFT JOIN profiles ON users.profile_id = profiles.id")
+
 	if all != "" {
-		db = db.Where("id LIKE ?", "%"+all+"%")
-		db = db.Or("email LIKE ?", "%"+all+"%")
-		db = db.Or("role LIKE ?", "%"+all+"%")
+		db = db.Where("users.id LIKE ?", "%"+all+"%")
+		db = db.Or("users.email LIKE ?", "%"+all+"%")
+		db = db.Or("users.role LIKE ?", "%"+all+"%")
+		db = db.Or("users.status LIKE ?", "%"+all+"%")
+		db = db.Or("profiles.firstname LIKE ?", "%"+all+"%")
+		db = db.Or("profiles.lastname LIKE ?", "%"+all+"%")
+		db = db.Or("profiles.middlename LIKE ?", "%"+all+"%")
+		db = db.Or("profiles.phone LIKE ?", "%"+all+"%")
 	}
 
 	if id != "" {
-		db = db.Where("id LIKE ?", "%"+id+"%")
+		db = db.Where("users.id LIKE ?", "%"+id+"%")
 	}
 
 	if email != "" {
-		db = db.Where("email LIKE ?", "%"+email+"%")
+		db = db.Where("users.email LIKE ?", "%"+email+"%")
 	}
 
 	if role != "" {
-		db = db.Where("role LIKE ?", "%"+role+"%")
+		db = db.Where("users.role LIKE ?", "%"+role+"%")
+	}
+
+	if status != "" {
+		db = db.Where("users.status LIKE ?", "%"+status+"%")
+	}
+
+	if name != "" {
+		namelist := strings.Split(name, " ")
+		for _, v := range namelist {
+			db = db.Where(`
+				profiles.firstname LIKE ?
+				OR profiles.lastname LIKE ?
+				OR profiles.middlename LIKE ?`,
+				"%"+v+"%", "%"+v+"%", "%"+v+"%")
+		}
+	}
+
+	if phone != "" {
+		db = db.Where("profiles.phone LIKE ?", "%"+phone+"%")
 	}
 
 	if sort != "" {
 		db = db.Order(sort)
+	} else {
+		db = db.Order("users.id DESC")
 	}
 
 	db.Preload("Profile").Find(&users)
@@ -271,7 +319,7 @@ func actionLogin(w http.ResponseWriter, r *http.Request) {
 				rsp.Errors.Add("email", "You have not verified your email address")
 			} else {
 				idstring := fmt.Sprintf("%d", user.ID)
-				token, err := App.GenToken(&idstring, &user.Email, &user.Role)
+				token, err := App.GenToken(&idstring, &user.Email, &user.Role, &user.Status)
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					rsp.Errors.Add("email", "Error generating JWT token: "+err.Error())
@@ -462,6 +510,7 @@ func createAdmin() {
 		user.Password = passhash
 		user.Salt = passsalt
 		user.Role = "admin"
+		user.Status = "active"
 		App.DB.Create(&user)
 	}
 }
@@ -491,6 +540,7 @@ func createTestUser() {
 		user.Password = passhash
 		user.Salt = passsalt
 		user.Role = "user"
+		user.Status = "active"
 		App.DB.Create(&user)
 	}
 }

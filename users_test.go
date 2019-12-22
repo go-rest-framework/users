@@ -1,3 +1,6 @@
+//TODO
+// - add test for login not active user
+// - add test for actions with not active user
 package users_test
 
 import (
@@ -20,6 +23,8 @@ var UEmail string
 var UNewEmail string
 var AdminToken string
 var UProfileName string
+var UProfileLastname string
+var UProfilePhone string
 var Murl = "http://localhost/api/users"
 
 type TestUsers struct {
@@ -324,6 +329,8 @@ func TestCreate(t *testing.T) {
 	var userJson string
 	UNewEmail = fake.EmailAddress()
 	UProfileName = fake.FirstName()
+	UProfileLastname = fake.LastName()
+	UProfilePhone = fake.Phone()
 	url := Murl
 	//negative empty role
 	userJson = `{
@@ -428,7 +435,7 @@ func TestCreate(t *testing.T) {
 		t.Fatal("no error if low pass complisity")
 	}
 
-	//positive
+	//negative no status
 	userJson = `{
 		"email":"` + UNewEmail + `",
 		"password":"good.PASS123",
@@ -439,6 +446,60 @@ func TestCreate(t *testing.T) {
 			"middlename":"` + fake.FirstName() + `",
 			"lastname":"` + fake.LastName() + `",
 			"phone":"` + fake.Phone() + `",
+			"avatar":"00001100"
+		}
+	}`
+
+	resp = doRequest(url, "POST", userJson, AdminToken)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u = readUserBody(resp, t)
+	if len(u.Errors) == 0 {
+		t.Fatal("no error if no status")
+	}
+
+	//negative status not from ["active","blocked","draft"]
+	userJson = `{
+		"email":"` + UNewEmail + `",
+		"password":"good.PASS123",
+		"repassword":"good.PASS123",
+		"role":"user",
+		"status":"wrongstatus",
+		"profile":{
+			"firstname":"` + UProfileName + `",
+			"middlename":"` + fake.FirstName() + `",
+			"lastname":"` + fake.LastName() + `",
+			"phone":"` + fake.Phone() + `",
+			"avatar":"00001100"
+		}
+	}`
+
+	resp = doRequest(url, "POST", userJson, AdminToken)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Success expected: %d", resp.StatusCode)
+	}
+
+	u = readUserBody(resp, t)
+	if len(u.Errors) == 0 {
+		t.Fatal("no error if status not in list active, blocked, draft")
+	}
+
+	//positive
+	userJson = `{
+		"email":"` + UNewEmail + `",
+		"password":"good.PASS123",
+		"repassword":"good.PASS123",
+		"role":"user",
+		"status":"active",
+		"profile":{
+			"firstname":"` + UProfileName + `",
+			"middlename":"` + fake.FirstName() + `",
+			"lastname":"` + UProfileLastname + `",
+			"phone":"` + UProfilePhone + `",
 			"avatar":"00001100"
 		}
 	}`
@@ -466,67 +527,189 @@ func TestCreate(t *testing.T) {
 	return
 }
 
-//"/api/users/get-all", App.Protect(srvGetAll, []string{"admin"})).Methods("GET")
-func TestGetAll(t *testing.T) {
-	// get count
-	url := Murl
-
-	resp := doRequest(url, "GET", "", "  ")
-
-	if resp.StatusCode == 200 {
-		t.Fatal("require validation dont work")
-	}
-
-	resp = doRequest(url, "GET", "", AdminToken)
+func doOneSearch(url string, t *testing.T) TestUsers {
+	resp := doRequest(url, "GET", "", AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUsersBody(resp, t)
+	return readUsersBody(resp, t)
+}
+
+//"/api/users/get-all", App.Protect(srvGetAll, []string{"admin"})).Methods("GET")
+func TestGetAll(t *testing.T) {
+	var u TestUsers
+	url := Murl
+	resp := doRequest(url, "GET", "", "  ")
+	if resp.StatusCode == 200 {
+		t.Fatal("require auntifications dont work")
+	}
+	//positive get all users
+	u = doOneSearch(url, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+	//positive search all email
+	u = doOneSearch(Murl+"?all="+UNewEmail, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
 	}
 
-	url1 := Murl + "?email=" + UNewEmail
+	if len(u.Data) != 1 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
+	}
+	//positive search all role
+	u = doOneSearch(Murl+"?all=user", t)
 
-	resp1 := doRequest(url1, "GET", "", AdminToken)
-
-	if resp1.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp1.StatusCode)
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
 	}
 
-	u1 := readUsersBody(resp1, t)
+	if len(u.Data) != 2 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected 2 element, giwen - : %d", len(u.Data))
+	}
+	//positive search all status
+	u = doOneSearch(Murl+"?all=blocked", t)
 
-	if len(u1.Errors) != 0 {
-		t.Fatal(u1.Errors)
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
 	}
 
-	if len(u1.Data) != 1 {
-		fmt.Println(u1.Data)
-		t.Errorf("Expected one element, giwen - : %d", len(u1.Data))
+	if len(u.Data) != 0 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected 0 elements, giwen - : %d", len(u.Data))
+	}
+	//positive search all firstname
+	u = doOneSearch(Murl+"?all="+UProfileName, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
 	}
 
-	//---------------
+	if len(u.Data) != 1 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
+	}
+	//positive search all phone
+	u = doOneSearch(Murl+"?all="+UProfilePhone, t)
 
-	url2 := Murl + "?sort=ID"
-
-	resp2 := doRequest(url2, "GET", "", AdminToken)
-
-	if resp2.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp2.StatusCode)
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
 	}
 
-	u2 := readUsersBody(resp2, t)
+	if len(u.Data) != 1 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
+	}
+	//positive search by filter id
+	u = doOneSearch(Murl+"?id="+fmt.Sprintf("%d", Uidnew), t)
 
-	if len(u2.Errors) != 0 {
-		t.Fatal(u2.Errors)
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
 	}
 
-	if !(u2.Data[0].ID < u2.Data[1].ID && u2.Data[1].ID < u2.Data[2].ID) {
-		t.Fatal("sorting dont work")
+	if len(u.Data) != 1 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
+	//positive search by filter email
+	u = doOneSearch(Murl+"?email="+UNewEmail, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) != 1 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
+	}
+	//positive search by filter role
+	u = doOneSearch(Murl+"?role=user", t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) != 2 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected 2 element, giwen - : %d", len(u.Data))
+	}
+	//positive search by filter status
+	u = doOneSearch(Murl+"?status=blocked", t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) != 0 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected 0 elements, giwen - : %d", len(u.Data))
+	}
+	//positive search by filter name with firstname
+	u = doOneSearch(Murl+"?name="+UProfileName, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) != 1 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
+	}
+	//positive search by filter name with firstname + lastname
+	u = doOneSearch(Murl+"?name="+UProfileName+"+"+UProfileLastname, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) != 1 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
+	}
+	//positive search by filter phone
+	u = doOneSearch(Murl+"?phone="+UProfilePhone, t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) != 1 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
+	}
+	//positive search by filter with firstname and status
+	u = doOneSearch(Murl+"?name="+UProfileName+"&status=active", t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if len(u.Data) != 1 {
+		fmt.Println(u.Data)
+		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
+	}
+	//positive sort by id
+	//u = doOneSearch(Murl+"?sort=ID", t)
+
+	//if len(u.Errors) != 0 {
+	//t.Fatal(u.Errors)
+	//}
+
+	//if !(u.Data[0].ID < u.Data[1].ID && u.Data[1].ID < u.Data[2].ID) {
+	//t.Fatal("sorting dont work")
+	//}
+	//positive sort by email
+	//positive sort by role
+	//positive sort by status
+	//positive sort by phone
+	//positive sort by name
+	// get count
 
 	return
 }
