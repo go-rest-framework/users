@@ -207,7 +207,24 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if sort != "" {
-		db = db.Order(sort)
+		switch sort {
+		case "id":
+			db = db.Order("users.id")
+		case "-id":
+			db = db.Order("users.id DESC")
+		case "email":
+			db = db.Order("users.email")
+		case "-email":
+			db = db.Order("users.email DESC")
+		case "name":
+			db = db.Order("profiles.firstname, profiles.lastname")
+		case "-name":
+			db = db.Order("profiles.firstname DESC, profiles.lastname DESC")
+		case "phone":
+			db = db.Order("profiles.phone")
+		case "-phone":
+			db = db.Order("profiles.phone DESC")
+		}
 	} else {
 		db = db.Order("users.id DESC")
 	}

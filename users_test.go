@@ -695,20 +695,65 @@ func TestGetAll(t *testing.T) {
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive sort by id
-	//u = doOneSearch(Murl+"?sort=ID", t)
+	u = doOneSearch(Murl+"?sort=id", t)
 
-	//if len(u.Errors) != 0 {
-	//t.Fatal(u.Errors)
-	//}
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
 
-	//if !(u.Data[0].ID < u.Data[1].ID && u.Data[1].ID < u.Data[2].ID) {
-	//t.Fatal("sorting dont work")
-	//}
+	if !(u.Data[0].ID < u.Data[1].ID && u.Data[1].ID < u.Data[2].ID) {
+		t.Fatal("sorting id dont work")
+	}
+	//positive sort by id DESC
+	u = doOneSearch(Murl+"?sort=-id", t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if !(u.Data[0].ID > u.Data[1].ID && u.Data[1].ID > u.Data[2].ID) {
+		t.Fatal("sorting id DESC dont work")
+	}
 	//positive sort by email
-	//positive sort by role
-	//positive sort by status
+	u = doOneSearch(Murl+"?sort=email", t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	for k, v := range u.Data {
+		fmt.Println(k, v.Email)
+	}
+
+	u = doOneSearch(Murl+"?sort=-email", t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	for k, v := range u.Data {
+		fmt.Println(k, v.Email)
+	}
 	//positive sort by phone
+	u = doOneSearch(Murl+"?sort=-phone", t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if u.Data[0].Profile.Phone == "" {
+		t.Fatal("sorting phone dont work")
+	}
 	//positive sort by name
+	u = doOneSearch(Murl+"?sort=-name", t)
+
+	if len(u.Errors) != 0 {
+		t.Fatal(u.Errors)
+	}
+
+	if u.Data[0].Email == "" {
+		t.Fatal("sorting email dont work")
+	}
 	// get count
 
 	return
