@@ -823,8 +823,17 @@ func TestGetOneProfile(t *testing.T) {
 
 //"/api/users/update", App.Protect(srvUpdate, []string{"admin"})).Methods("POST")
 func TestUpdate(t *testing.T) {
-	url := fmt.Sprintf("%s%s%d", Murl, "/", Uid)
-	userJson := `{"email":"sldfjsdlfeusdlfjsdlfj", "password":"343223423423"}`
+	url := fmt.Sprintf("%s%s%d", Murl, "/", Uidnew)
+	userJson := `{
+		"status":"blocked",
+		"profile":{
+			"firstname": "test111",
+			"middlename": "test222",
+			"lastname": "test333",
+			"phone": "12345",
+			"avatar": ""
+		}
+	}`
 
 	resp := doRequest(url, "PATCH", userJson, AdminToken)
 
@@ -834,23 +843,8 @@ func TestUpdate(t *testing.T) {
 
 	u := readUserBody(resp, t)
 
-	if len(u.Errors) == 0 {
-		t.Fatal("email type validation dont work")
-	}
-
-	url = fmt.Sprintf("%s%s%d", Murl, "/", Uidnew)
-	userJson = `{"role":"admin"}`
-
-	resp = doRequest(url, "PATCH", userJson, AdminToken)
-
-	if resp.StatusCode != 200 {
-		t.Errorf("Success expected: %d", resp.StatusCode)
-	}
-
-	u = readUserBody(resp, t)
-
-	if len(u.Errors) != 0 {
-		t.Fatal(u.Errors)
+	if u.Data.Status != "blocked" {
+		t.Fatal("update dont work", u.Errors, Uidnew)
 	}
 
 	return
@@ -885,6 +879,8 @@ func TestDelete(t *testing.T) {
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
 	}*/
+
+	fmt.Println(Uidnew)
 
 	url = fmt.Sprintf("%s%s%d", Murl, "/", Uidnew)
 

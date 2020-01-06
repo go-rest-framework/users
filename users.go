@@ -38,9 +38,12 @@ type User struct {
 }
 
 type UserUpdate struct {
-	Email   string  `json:"email" valid:"email"`
-	Role    string  `json:"role"`
-	Profile Profile `json:"profile"`
+	Password   string  `json:"password" valid:"ascii,passcomplexity~password: Password must be at least 8 characters long and contain letters & uppercase letters & numbers & foam marks"`
+	RePassword string  `json:"repassword" valid:"ascii,passmatch~repassword: Passwords do not match"`
+	Role       string  `json:"role"`
+	Salt       string  `json:"-"`
+	Status     string  `json:"status" valid:"required,in(active|blocked|draft)"`
+	Profile    Profile `json:"profile"`
 }
 
 type Login struct {
@@ -67,6 +70,10 @@ func init() {
 	govalidator.CustomTypeTagMap.Set("passmatch", govalidator.CustomTypeValidator(func(i interface{}, context interface{}) bool {
 		switch v := context.(type) { // this validates a field against the value in another field, i.e. dependent validation
 		case User:
+			if i == v.Password {
+				return true
+			}
+		case UserUpdate:
 			if i == v.Password {
 				return true
 			}
@@ -282,6 +289,13 @@ func actionUpdate(w http.ResponseWriter, r *http.Request) {
 			if user.ID == 0 {
 				rsp.Errors.Add("ID", "User not found")
 			} else {
+				if data.Password != "" && data.RePassword != "" {
+					curtime := fmt.Sprintf("%x", time.Now())
+					passsalt := App.ToSum256(curtime)
+					passhash := App.ToSum256(data.Password + passsalt)
+					data.Password = passhash
+					data.Salt = passsalt
+				}
 				App.DB.Model(&user).Updates(data)
 			}
 		}
