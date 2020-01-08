@@ -145,6 +145,7 @@ func actionGetOne(w http.ResponseWriter, r *http.Request) {
 func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	var (
 		users  Users
+		count  int
 		rsp    = core.Response{Data: &users, Req: r}
 		all    = r.FormValue("all")
 		id     = r.FormValue("id")
@@ -154,6 +155,8 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		name   = r.FormValue("name")
 		phone  = r.FormValue("phone")
 		sort   = r.FormValue("sort")
+		limit  = r.FormValue("limit")
+		offset = r.FormValue("offset")
 		db     = App.DB
 	)
 
@@ -236,9 +239,22 @@ func actionGetAll(w http.ResponseWriter, r *http.Request) {
 		db = db.Order("users.id DESC")
 	}
 
+	db.Preload("Profile").Find(&users).Count(&count)
+
+	if limit != "" {
+		db = db.Limit(limit)
+	} else {
+		db = db.Limit(5)
+	}
+
+	if offset != "" {
+		db = db.Offset(offset)
+	}
+
 	db.Preload("Profile").Find(&users)
 
 	rsp.Data = &users
+	rsp.Count = count
 
 	w.Write(rsp.Make())
 }
