@@ -27,8 +27,8 @@ type User struct {
 	Email       string  `json:"email" gorm:"unique;not null" valid:"email,required,unique~email: Email not unique"`
 	Password    string  `json:"password" valid:"ascii,required,passcomplexity~password: Password must be at least 8 characters long and contain letters & uppercase letters & numbers & foam marks"`
 	RePassword  string  `gorm:"-" json:"repassword" valid:"ascii,required,passmatch~repassword: Passwords do not match"`
-	Role        string  `json:"role" valid:"required"`
-	Status      string  `json:"status" valid:"required,in(active|blocked|draft)"`
+	Role        string  `json:"role" valid:"in(candidate|user|admin)"`
+	Status      string  `json:"status" valid:"in(active|blocked|draft)"`
 	Token       string  `json:"token"`
 	Salt        string  `json:"-"`
 	CheckToken  string  `json:"-"`

@@ -8,5 +8,5 @@ type Profile struct {
 	Middlename string `json:"middlename"`
 	Lastname   string `json:"lastname"`
 	Phone      string `json:"phone"`
-	Avatar     string `json:"avatar" gorm:"type:longtext"`
+	Avatar     string `json:"avatar" gorm:"type:text"`
 }

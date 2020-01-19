@@ -89,7 +89,7 @@ func readProfileBody(r *http.Response, t *testing.T) TestProfile {
 }
 
 //"/api/users/register", srvRegister).Methods("POST")
-/*func TestRegister(t *testing.T) {
+func TestRegister(t *testing.T) {
 
 	UEmail = fake.EmailAddress()
 
@@ -122,7 +122,11 @@ func readProfileBody(r *http.Response, t *testing.T) TestProfile {
 		t.Fatal("require validation dont work")
 	}
 
-	userJson = `{"email":"` + UEmail + `", "password":"343223423423"}`
+	userJson = `{
+		"email":"` + UEmail + `",
+		"password":"aaAA11..",
+		"repassword":"aaAA11.."
+	}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -142,7 +146,7 @@ func readProfileBody(r *http.Response, t *testing.T) TestProfile {
 }
 
 //"/api/users/confirm", srvConfirm).Methods("POST")
-func TestConfirm(t *testing.T) {
+func TestConfirmEmail(t *testing.T) {
 
 	url := Murl + "/confirm"
 	var userJson = `{"checkToken":"wrongtoken"}`
@@ -289,7 +293,7 @@ func TestReset(t *testing.T) {
 	}
 
 	return
-}*/
+}
 
 func TestAdminLogin(t *testing.T) {
 	var userJson string
@@ -337,7 +341,7 @@ func TestCreate(t *testing.T) {
 		"email":"` + UNewEmail + `",
 		"password":"good.PASS123",
 		"repassword":"good.PASS123",
-		"role":"",
+		"role":"wrongrole",
 		"profile":{
 			"firstname":"` + UProfileName + `",
 			"middlename":"` + fake.FirstName() + `",
@@ -356,7 +360,7 @@ func TestCreate(t *testing.T) {
 	u := readUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
-		t.Fatal("no error if no role")
+		t.Fatal("no error if wrong role")
 	}
 	//negative wrong email format
 	userJson = `{
@@ -441,6 +445,7 @@ func TestCreate(t *testing.T) {
 		"password":"good.PASS123",
 		"repassword":"good.PASS123",
 		"role":"user",
+		"status":"wrongstatus",
 		"profile":{
 			"firstname":"` + UProfileName + `",
 			"middlename":"` + fake.FirstName() + `",
@@ -458,7 +463,7 @@ func TestCreate(t *testing.T) {
 
 	u = readUserBody(resp, t)
 	if len(u.Errors) == 0 {
-		t.Fatal("no error if no status")
+		t.Fatal("no error if wrong status")
 	}
 
 	//negative status not from ["active","blocked","draft"]
@@ -559,7 +564,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 1 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive search all role
@@ -569,9 +573,8 @@ func TestGetAll(t *testing.T) {
 		t.Fatal(u.Errors)
 	}
 
-	if len(u.Data) != 2 {
-		fmt.Println(u.Data)
-		t.Errorf("Expected 2 element, giwen - : %d", len(u.Data))
+	if len(u.Data) != 3 {
+		t.Errorf("Expected 3 element, giwen - : %d", len(u.Data))
 	}
 	//positive search all status
 	u = doOneSearch(Murl+"?all=blocked", t)
@@ -581,7 +584,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 0 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected 0 elements, giwen - : %d", len(u.Data))
 	}
 	//positive search all firstname
@@ -592,7 +594,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 1 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive search all phone
@@ -603,7 +604,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 1 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive search by filter id
@@ -614,7 +614,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 1 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive search by filter email
@@ -625,7 +624,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 1 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive search by filter role
@@ -635,9 +633,8 @@ func TestGetAll(t *testing.T) {
 		t.Fatal(u.Errors)
 	}
 
-	if len(u.Data) != 2 {
-		fmt.Println(u.Data)
-		t.Errorf("Expected 2 element, giwen - : %d", len(u.Data))
+	if len(u.Data) != 3 {
+		t.Errorf("Expected 3 element, giwen - : %d", len(u.Data))
 	}
 	//positive search by filter status
 	u = doOneSearch(Murl+"?status=blocked", t)
@@ -647,7 +644,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 0 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected 0 elements, giwen - : %d", len(u.Data))
 	}
 	//positive search by filter name with firstname
@@ -658,7 +654,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 1 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive search by filter name with firstname + lastname
@@ -669,7 +664,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 1 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive search by filter phone
@@ -680,7 +674,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 1 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive search by filter with firstname and status
@@ -691,7 +684,6 @@ func TestGetAll(t *testing.T) {
 	}
 
 	if len(u.Data) != 1 {
-		fmt.Println(u.Data)
 		t.Errorf("Expected one element, giwen - : %d", len(u.Data))
 	}
 	//positive sort by id
