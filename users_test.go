@@ -226,7 +226,7 @@ func TestLogin(t *testing.T) {
 		t.Fatal("require validation dont work")
 	}
 
-	userJson = `{"email":"` + UEmail + `", "password":"343223423423"}`
+	userJson = `{"email":"` + UEmail + `", "password":"aaAA11.."}`
 
 	resp = doRequest(url, "POST", userJson, "")
 
@@ -788,6 +788,12 @@ func TestGetOne(t *testing.T) {
 		t.Fatal("wrong user profile firstname")
 	}
 
+	if u.Data.Profile.Avatar != "00001100" {
+		t.Fatal("wrong user profile awatar")
+	}
+
+	fmt.Println(u.Data.Profile.Avatar)
+
 	return
 }
 
@@ -858,7 +864,7 @@ func TestDelete(t *testing.T) {
 		t.Fatal("wrong id validation dont work")
 	}
 
-	/*url = fmt.Sprintf("%s%s%d", Murl, "/", Uid)
+	url = fmt.Sprintf("%s%s%d", Murl, "/", Uid)
 
 	resp = doRequest(url, "DELETE", "", AdminToken)
 
@@ -870,7 +876,7 @@ func TestDelete(t *testing.T) {
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
-	}*/
+	}
 
 	fmt.Println(Uidnew)
 

@@ -62,8 +62,8 @@ type ResetRequest struct {
 
 type Reset struct {
 	CheckToken string `json:"checkToken" valid:"required"`
-	Newpass    string `json:"newpass" valid:"required"`
-	NewpassRe  string `json:"newpassRe" valid:"required"`
+	Password   string `json:"password" valid:"ascii,required,passcomplexity~password: Password must be at least 8 characters long and contain letters & uppercase letters & numbers & foam marks"`
+	RePassword string `gorm:"-" json:"repassword" valid:"ascii,required,passmatch~repassword: Passwords do not match"`
 }
 
 func init() {
@@ -74,6 +74,10 @@ func init() {
 				return true
 			}
 		case UserUpdate:
+			if i == v.Password {
+				return true
+			}
+		case Reset:
 			if i == v.Password {
 				return true
 			}
@@ -359,7 +363,7 @@ func actionLogin(w http.ResponseWriter, r *http.Request) {
 
 	if rsp.IsJsonParseDone(r.Body) {
 		if rsp.IsValidate() {
-			App.DB.Where("email = ?", data.Email).First(&user)
+			App.DB.Preload("Profile").Where("email = ?", data.Email).First(&user)
 			if user.ID == 0 || user.Password != App.ToSum256(data.Password+user.Salt) {
 				rsp.Errors.Add("email", "User not found or wrong password")
 			} else if user.Role == "" || user.Role == "candidate" {
@@ -413,6 +417,7 @@ func actionRegister(w http.ResponseWriter, r *http.Request) {
 			user.Password = passhash
 			user.Salt = passsalt
 			user.Role = "candidate"
+			user.Status = "draft"
 			user.CheckToken = checktoken
 			log.Println(checktoken)
 			App.DB.Create(&user)
@@ -445,7 +450,11 @@ func actionConfirm(w http.ResponseWriter, r *http.Request) {
 			} else if user.Role != "" && user.Role != "candidate" {
 				rsp.Errors.Add("CheckToken", "You have already verified your email")
 			} else {
-				res := App.DB.Model(&user).Updates(map[string]interface{}{"role": "user", "check_token": ""})
+				res := App.DB.Model(&user).Updates(map[string]interface{}{
+					"role":        "user",
+					"status":      "active",
+					"check_token": "",
+				})
 				if res.Error != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					rsp.Errors.Add("CheckToken", "Data saving error")
@@ -473,33 +482,33 @@ func actionResetrequest(w http.ResponseWriter, r *http.Request) {
 			var checktoken string
 			App.DB.Where("email = ?", data.Email).First(&user)
 			if user.ID == 0 {
-				rsp.Errors.Add("Email", "User not found")
+				rsp.Errors.Add("email", "User not found")
 			} else if user.Role == "" || user.Role == "candidate" {
-				rsp.Errors.Add("Email", "You have not confirmed your email")
+				rsp.Errors.Add("email", "You have not confirmed your email")
 			} else {
 				if App.IsTest {
 					checktoken = "testchecktoken"
 				} else {
 					checktoken = App.ToSum256(fmt.Sprintf("%s.%x", user.Email, time.Now()))
 				}
-				res := App.DB.Model(&user).Update("checktoken", checktoken)
+				res := App.DB.Model(&user).Update("check_token", checktoken)
 				if res.Error != nil {
 					w.WriteHeader(http.StatusInternalServerError)
-					rsp.Errors.Add("Email", "Data saving error")
+					rsp.Errors.Add("email", "Data saving error")
 					log.Println("Data saving error: " + res.Error.Error())
 				} else {
 					App.Mail.Send(
 						user.Email,
 						"Password reset request",
-						"To reset your password, go to the link "+data.CallBackUrl+"?token="+checktoken,
+						"To reset your password, go to the link "+data.CallBackUrl+"?repasstoken="+checktoken,
 					)
-					log.Println(checktoken)
+					log.Println("To reset your password, go to the link " + data.CallBackUrl + "?repasstoken=" + checktoken)
 				}
 			}
 		}
 	}
 
-	rsp.Data = &user
+	rsp.Data = &data
 
 	w.Write(rsp.Make())
 }
@@ -515,13 +524,11 @@ func actionReset(w http.ResponseWriter, r *http.Request) {
 		if rsp.IsValidate() {
 			App.DB.Where("check_token = ?", data.CheckToken).First(&user)
 			if user.ID == 0 {
-				rsp.Errors.Add("Email", "User not found")
+				rsp.Errors.Add("password", "User with this token is not found")
 			} else if user.Role == "" || user.Role == "candidate" {
-				rsp.Errors.Add("Email", "You have already verified your email")
-			} else if &data.Newpass != &data.NewpassRe {
-				rsp.Errors.Add("Newpass", "New password and new password repeat must be equal")
+				rsp.Errors.Add("password", "You have already verified your email")
 			} else {
-				passhash := App.ToSum256(data.Newpass + user.Salt)
+				passhash := App.ToSum256(data.Password + user.Salt)
 				App.DB.Model(&user).Updates(map[string]interface{}{"password": passhash, "check_token": ""})
 			}
 		}
