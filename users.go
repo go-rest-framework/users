@@ -426,10 +426,12 @@ func actionRegister(w http.ResponseWriter, r *http.Request) {
 				"Registration confirm",
 				"To confirm the registration, go to the link "+user.CallBackUrl+"?token="+checktoken,
 			)
+			fmt.Println("To confirm the registration, go to the link " + user.CallBackUrl + "?token=" + checktoken)
 		}
 	}
 
 	user.Password = ""
+	user.RePassword = ""
 	rsp.Data = &user
 
 	w.Write(rsp.Make())
