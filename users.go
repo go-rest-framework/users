@@ -149,7 +149,7 @@ func actionGetOne(w http.ResponseWriter, r *http.Request) {
 func actionGetAll(w http.ResponseWriter, r *http.Request) {
 	var (
 		users  Users
-		count  int
+		count  int64
 		rsp    = core.Response{Data: &users, Req: r}
 		all    = r.FormValue("all")
 		id     = r.FormValue("id")
