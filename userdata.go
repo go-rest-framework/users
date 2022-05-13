@@ -14,12 +14,11 @@ type UserData struct {
 	Data   User            `json:"data"`
 }
 
-func (u UserData) Read(r *http.Response) UserData {
+func (u UserData) Read(r *http.Response) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
 	json.Unmarshal([]byte(body), &u)
 	defer r.Body.Close()
-	return u
 }
