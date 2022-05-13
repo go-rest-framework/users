@@ -22,16 +22,6 @@ var App core.App
 
 type Users []User
 
-type TestUser struct {
-	Errors []core.ErrorMsg `json:"errors"`
-	Data   User            `json:"data"`
-}
-
-type UserData struct {
-	Errors []core.ErrorMsg `json:"errors"`
-	Data   User            `json:"data"`
-}
-
 type User struct {
 	gorm.Model
 	Email       string  `json:"email" gorm:"unique;not null" valid:"email,required,unique~email: Email not unique"`
