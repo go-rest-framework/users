@@ -1,7 +1,7 @@
 //TODO
 // - add test for login not active user
 // - add test for actions with not active user
-package users_test
+package users
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/go-rest-framework/core"
-	"github.com/go-rest-framework/users"
+	//"github.com/go-rest-framework/users"
 	"github.com/icrowley/fake"
 )
 
@@ -29,17 +29,12 @@ var Murl = "http://localhost/api/users"
 
 type TestUsers struct {
 	Errors []core.ErrorMsg `json:"errors"`
-	Data   users.Users     `json:"data"`
-}
-
-type TestUser struct {
-	Errors []core.ErrorMsg `json:"errors"`
-	Data   users.User      `json:"data"`
+	Data   Users           `json:"data"`
 }
 
 type TestProfile struct {
 	Errors []core.ErrorMsg `json:"errors"`
-	Data   users.Profile   `json:"data"`
+	Data   Profile         `json:"data"`
 }
 
 func readUsersBody(r *http.Response, t *testing.T) TestUsers {
@@ -66,7 +61,7 @@ func doRequest(url, proto, userJson, token string) *http.Response {
 	return resp
 }
 
-func readUserBody(r *http.Response, t *testing.T) TestUser {
+func ReadUserBody(r *http.Response, t *testing.T) TestUser {
 	var u TestUser
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -102,7 +97,7 @@ func TestRegister(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("email type validation dont work")
@@ -116,7 +111,7 @@ func TestRegister(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("require validation dont work")
@@ -134,7 +129,7 @@ func TestRegister(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -157,7 +152,7 @@ func TestConfirmEmail(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("token check fail")
@@ -171,7 +166,7 @@ func TestConfirmEmail(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("require validation dont work")
@@ -185,7 +180,7 @@ func TestConfirmEmail(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -206,7 +201,7 @@ func TestLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("password check fail")
@@ -220,7 +215,7 @@ func TestLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("require validation dont work")
@@ -234,7 +229,7 @@ func TestLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -274,7 +269,7 @@ func TestReset(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("check equal passwords fail")
@@ -307,7 +302,7 @@ func TestAdminLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("No error with wrong password")
@@ -321,7 +316,7 @@ func TestAdminLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	AdminToken = u.Data.Token
 
@@ -357,7 +352,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if wrong role")
@@ -383,7 +378,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if wrong email format")
@@ -409,7 +404,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if no repass")
 	}
@@ -434,7 +429,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if low pass complisity")
 	}
@@ -461,7 +456,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if wrong status")
 	}
@@ -488,7 +483,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if status not in list active, blocked, draft")
 	}
@@ -515,7 +510,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -760,7 +755,7 @@ func TestGetOne(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("element not found dont work")
@@ -774,7 +769,7 @@ func TestGetOne(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -839,7 +834,7 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := ReadUserBody(resp, t)
 
 	if u.Data.Status != "blocked" {
 		t.Fatal("update dont work", u.Errors, Uidnew)
@@ -858,7 +853,7 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := readUserBody(resp, t)
+	u := ReadUserBody(resp, t)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("wrong id validation dont work")
@@ -872,7 +867,7 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -888,7 +883,7 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = readUserBody(resp, t)
+	u = ReadUserBody(resp, t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
