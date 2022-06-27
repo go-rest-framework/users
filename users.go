@@ -1,6 +1,3 @@
-//TODO
-// - add test for login not active user
-// - add test for protect aggriment not active user
 package users
 
 import (
@@ -24,17 +21,18 @@ type Users []User
 
 type User struct {
 	gorm.Model
-	Email       string  `json:"email" gorm:"unique;not null" valid:"email,required,unique~email: Email not unique"`
-	Password    string  `json:"password" valid:"ascii,required,passcomplexity~password: Password must be at least 8 characters long and contain letters & uppercase letters & numbers & foam marks"`
-	RePassword  string  `gorm:"-" json:"repassword" valid:"ascii,required,passmatch~repassword: Passwords do not match"`
-	Role        string  `json:"role" valid:"in(candidate|user|admin)"`
-	Status      string  `json:"status" valid:"in(active|blocked|draft)"`
-	Token       string  `json:"token"`
-	Salt        string  `json:"-"`
-	CheckToken  string  `json:"-"`
-	CallBackUrl string  `gorm:"-"`
-	Profile     Profile `json:"profile"`
-	ProfileID   int     `json:"profileID"`
+	Email       string        `json:"email" gorm:"unique;not null" valid:"email,required,unique~email: Email not unique"`
+	Password    string        `json:"password" valid:"ascii,required,passcomplexity~password: Password must be at least 8 characters long and contain letters & uppercase letters & numbers & foam marks"`
+	RePassword  string        `gorm:"-" json:"repassword" valid:"ascii,required,passmatch~repassword: Passwords do not match"`
+	Role        string        `json:"role" valid:"in(candidate|user|admin)"`
+	Status      string        `json:"status" valid:"in(active|blocked|draft)"`
+	Token       string        `json:"token"`
+	Salt        string        `json:"-"`
+	CheckToken  string        `json:"-"`
+	CallBackUrl string        `gorm:"-"`
+	Profile     Profile       `json:"profile"`
+	ProfileID   int           `json:"profileID"`
+	Keywords    []UserKeyword `json:"keywords" gorm:"many2many:userkeywords"`
 }
 
 type UserUpdate struct {
@@ -106,7 +104,7 @@ func init() {
 func Configure(a core.App) {
 	App = a
 
-	App.DB.AutoMigrate(&User{}, &Profile{})
+	App.DB.Debug().AutoMigrate(&User{}, &Profile{}, &UserKeyword{})
 
 	createAdmin()
 	createTestUser()

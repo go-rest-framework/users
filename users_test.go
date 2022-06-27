@@ -13,19 +13,20 @@ import (
 	"testing"
 
 	"github.com/go-rest-framework/core"
-	//"github.com/go-rest-framework/users"
 	"github.com/icrowley/fake"
 )
 
-var Uid uint
-var Uidnew uint
-var UEmail string
-var UNewEmail string
-var AdminToken string
-var UProfileName string
-var UProfileLastname string
-var UProfilePhone string
-var Murl = "http://localhost/api/users"
+var (
+	Uid              uint
+	Uidnew           uint
+	UEmail           string
+	UNewEmail        string
+	AdminToken       string
+	UProfileName     string
+	UProfileLastname string
+	UProfilePhone    string
+	Murl             = "http://localhost/api/users"
+)
 
 type TestUsers struct {
 	Errors []core.ErrorMsg `json:"errors"`
@@ -61,17 +62,6 @@ func doRequest(url, proto, userJson, token string) *http.Response {
 	return resp
 }
 
-func ReadUserBody(r *http.Response, t *testing.T) TestUser {
-	var u TestUser
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Fatal(err)
-	}
-	json.Unmarshal([]byte(body), &u)
-	defer r.Body.Close()
-	return u
-}
-
 func readProfileBody(r *http.Response, t *testing.T) TestProfile {
 	var p TestProfile
 	body, err := ioutil.ReadAll(r.Body)
@@ -86,6 +76,8 @@ func readProfileBody(r *http.Response, t *testing.T) TestProfile {
 //"/api/users/register", srvRegister).Methods("POST")
 func TestRegister(t *testing.T) {
 
+	var u UserData
+
 	UEmail = fake.EmailAddress()
 
 	url := Murl + "/register"
@@ -97,7 +89,7 @@ func TestRegister(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("email type validation dont work")
@@ -111,7 +103,7 @@ func TestRegister(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("require validation dont work")
@@ -129,7 +121,7 @@ func TestRegister(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -145,6 +137,7 @@ func TestConfirmEmail(t *testing.T) {
 
 	url := Murl + "/confirm"
 	var userJson = `{"checkToken":"wrongtoken"}`
+	var u UserData
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -152,7 +145,7 @@ func TestConfirmEmail(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("token check fail")
@@ -166,7 +159,7 @@ func TestConfirmEmail(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("require validation dont work")
@@ -180,7 +173,7 @@ func TestConfirmEmail(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -194,6 +187,7 @@ func TestLogin(t *testing.T) {
 
 	url := Murl + "/login"
 	var userJson = `{"email":"sdlf@eusdlfjsdlfj.com", "password":"dddd343223423423"}`
+	var u UserData
 
 	resp := doRequest(url, "POST", userJson, "")
 
@@ -201,7 +195,7 @@ func TestLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("password check fail")
@@ -215,7 +209,7 @@ func TestLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("require validation dont work")
@@ -229,7 +223,7 @@ func TestLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -257,6 +251,7 @@ func TestResetrequest(t *testing.T) {
 func TestReset(t *testing.T) {
 
 	url := Murl + "/reset"
+	var u UserData
 	var userJson = `{
 		"checkToken":"testchecktoken",
 		"newpass":"newpass",
@@ -269,7 +264,7 @@ func TestReset(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("check equal passwords fail")
@@ -292,6 +287,7 @@ func TestReset(t *testing.T) {
 
 func TestAdminLogin(t *testing.T) {
 	var userJson string
+	var u UserData
 	url := Murl + "/login"
 
 	userJson = `{"email":"admin@admin.a", "password":"wrongpass"}`
@@ -302,7 +298,7 @@ func TestAdminLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("No error with wrong password")
@@ -316,7 +312,7 @@ func TestAdminLogin(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	AdminToken = u.Data.Token
 
@@ -326,6 +322,7 @@ func TestAdminLogin(t *testing.T) {
 //"/api/users/create", App.Protect(srvCreate, []string{"admin"})).Methods("POST")
 func TestCreate(t *testing.T) {
 	var userJson string
+	var u UserData
 	UNewEmail = fake.EmailAddress()
 	UProfileName = fake.FirstName()
 	UProfileLastname = fake.LastName()
@@ -352,7 +349,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if wrong role")
@@ -378,7 +375,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if wrong email format")
@@ -404,7 +401,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if no repass")
 	}
@@ -429,7 +426,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if low pass complisity")
 	}
@@ -456,7 +453,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if wrong status")
 	}
@@ -483,7 +480,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 	if len(u.Errors) == 0 {
 		t.Fatal("no error if status not in list active, blocked, draft")
 	}
@@ -510,7 +507,7 @@ func TestCreate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -722,14 +719,18 @@ func TestGetAll(t *testing.T) {
 		fmt.Println(k, v.Email)
 	}
 	//positive sort by phone
-	u = doOneSearch(Murl+"?sort=-phone", t)
+	u = doOneSearch(Murl+"?sort=phone", t)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
 	}
 
 	if u.Data[0].Profile.Phone == "" {
-		t.Fatal("sorting phone dont work")
+		for e := range u.Data {
+			fmt.Println(e, u.Data[e].Profile.Phone)
+		}
+
+		t.Fatalf("sorting phone dont work, expected nil get %s", u.Data[0].Profile.Phone)
 	}
 	//positive sort by name
 	u = doOneSearch(Murl+"?sort=-name", t)
@@ -749,13 +750,14 @@ func TestGetAll(t *testing.T) {
 //"/api/users/get-one/{id}", App.Protect(srvGetOne, []string{"admin"})).Methods("GET")
 func TestGetOne(t *testing.T) {
 	url := Murl + "/0"
+	var u UserData
 	resp := doRequest(url, "GET", "", AdminToken)
 
 	if resp.StatusCode != 200 {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("element not found dont work")
@@ -769,7 +771,7 @@ func TestGetOne(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -816,6 +818,7 @@ func TestGetOneProfile(t *testing.T) {
 
 //"/api/users/update", App.Protect(srvUpdate, []string{"admin"})).Methods("POST")
 func TestUpdate(t *testing.T) {
+	var u UserData
 	url := fmt.Sprintf("%s%s%d", Murl, "/", Uidnew)
 	userJson := `{
 		"status":"blocked",
@@ -834,7 +837,7 @@ func TestUpdate(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if u.Data.Status != "blocked" {
 		t.Fatal("update dont work", u.Errors, Uidnew)
@@ -845,6 +848,7 @@ func TestUpdate(t *testing.T) {
 
 //"/api/users/delete", App.Protect(srvDelete, []string{"admin"})).Methods("POST")
 func TestDelete(t *testing.T) {
+	var u UserData
 	url := fmt.Sprintf("%s%s%d", Murl, "/", 0)
 
 	resp := doRequest(url, "DELETE", "", AdminToken)
@@ -853,7 +857,7 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u := ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) == 0 {
 		t.Fatal("wrong id validation dont work")
@@ -867,7 +871,7 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
@@ -883,7 +887,7 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Success expected: %d", resp.StatusCode)
 	}
 
-	u = ReadUserBody(resp, t)
+	u.Read(resp)
 
 	if len(u.Errors) != 0 {
 		t.Fatal(u.Errors)
